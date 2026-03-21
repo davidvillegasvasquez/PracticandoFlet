@@ -7,7 +7,7 @@ def principal(pagina: ft.Page):
         controls=[
             ft.Container(content=ft.Text("Hola1"), bgcolor="blue", padding=10),
             ft.Container(content=ft.Text("Hola2"), bgcolor="yellow", padding=10),
-            ft.Container(content=ft.Text("Hola3", color="white"), bgcolor="black", padding=10),
+            ft.Container(content=ft.Text("Hola3"), bgcolor="black", padding=20),
         ]
     )
 
@@ -15,7 +15,7 @@ def principal(pagina: ft.Page):
         controls=[
             ft.Container(content=ft.Text("Hola1"), bgcolor="blue", padding=10),
             ft.Container(content=ft.Text("Hola2"), bgcolor="yellow", padding=10),
-            ft.Container(content=ft.Text("Hola3",color="white"), bgcolor="black", padding=5),
+            ft.Container(content=ft.Text("Hola3"), bgcolor="black", padding=20),
         ]
     )
 
