@@ -1,3 +1,4 @@
+#ej1.py
 import flet as ft
 
 def principal(pagina: ft.Page):
@@ -7,7 +8,7 @@ def principal(pagina: ft.Page):
         controls=[
             ft.Container(content=ft.Text("Hola1"), bgcolor="blue", padding=10),
             ft.Container(content=ft.Text("Hola2"), bgcolor="yellow", padding=10),
-            ft.Container(content=ft.Text("Hola3"), bgcolor="black", padding=20),
+            ft.Container(content=ft.Text("Hola3", color="white"), bgcolor="black", padding=10),
         ]
     )
 
@@ -15,7 +16,7 @@ def principal(pagina: ft.Page):
         controls=[
             ft.Container(content=ft.Text("Hola1"), bgcolor="blue", padding=10),
             ft.Container(content=ft.Text("Hola2"), bgcolor="yellow", padding=10),
-            ft.Container(content=ft.Text("Hola3"), bgcolor="black", padding=20),
+            ft.Container(content=ft.Text("Hola3",color="white"), bgcolor="black", padding=5),
         ]
     )
 

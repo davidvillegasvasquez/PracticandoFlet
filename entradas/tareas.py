@@ -1,3 +1,4 @@
+#tareas.py
 import flet as f
 from paquetes.aplicaciones.agenda_tareas import TodoApp
 from paquetes.aplicaciones.calculadora import AppCalculadora
