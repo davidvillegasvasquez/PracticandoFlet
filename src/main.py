@@ -1,89 +1,51 @@
-#El control container.
+#Consumidor de api rest django, fletDrfClient.py
 import flet as ft
+import requests
 
 def principal(pagina: ft.Page):
-    pagina.title = "Ejemplo de Contenedores"
-    pagina.theme_mode = ft.ThemeMode.LIGHT
-    pagina.vertical_alignment = ft.MainAxisAlignment.CENTER
-    pagina.horizontal_alignment = ft.CrossAxisAlignment.CENTER
+    pagina.title = "Consumo API Django"
 
-    pagina.add(
-        ft.Row(
-            alignment=ft.MainAxisAlignment.CENTER,
-            controls=[
-                ft.Container(
-                    content=ft.Text("No clicleable"),
-                    margin=10,
-                    padding=10,
-                    alignment=ft.Alignment.CENTER,
-                    bgcolor=ft.Colors.AMBER,
-                    width=150,
-                    height=150,
-                    border_radius=10,
-                ),
-                ft.Container(
-                    content=ft.Text("Clicleable sin entintar"),
-                    margin=10,
-                    padding=10,
-                    alignment=ft.Alignment.CENTER,
-                    bgcolor=ft.Colors.GREEN_200,
-                    width=150,
-                    height=150,
-                    border_radius=10,
-                    on_click=lambda e: print("Clickable sin entintar clicleada!"),
-                ),
-                ft.Container(
-                    content=ft.Text("Clicleable con entintada"),
-                    margin=10,
-                    padding=10,
-                    alignment=ft.Alignment.CENTER,
-                    bgcolor=ft.Colors.CYAN_200,
-                    width=150,
-                    height=150,
-                    border_radius=10,
-                    ink=True, #ink da cambio de color al pasar cursor sobre el.
-                    on_click=lambda e: print("Clickable con entintada clicleada!"),
-                ),
-                ft.Container(
-                    content=ft.Text("Clickable transparente con entintada"),
-                    margin=10,
-                    padding=10,
-                    alignment=ft.Alignment.CENTER,
-                    width=150,
-                    height=150,
-                    border_radius=10,
-                    ink=True,
-                    on_click=lambda e: print("Clickable transparente con entintada clicked!"),
-                ),
-            ],
-        ),
-    )
+    def botonClickeado(e):
+        # 1. Consumir la API
+        try:
+            respuesta = requests.get("http://127.0.0.1:8000/catalogo/api-todosLosAutores/")
+        except:
+            txt_resultado.value = "hubo un error en conexión"
+        else:
+            resultado=""
+            data = respuesta.json()
 
-    pagina.add(ft.Button(content="Enabled button")) #add diferido.  
+            # 2. Convertimos el json a dict
+            diccionario = dict(data)
 
-    contenedor = ft.Container(
-                    content=ft.Button(
-                        width=120,
-                        height=30,
-                        content=ft.Row(
-                            alignment=ft.MainAxisAlignment.CENTER,
-                            controls=[
-                                ft.Icon(ft.Icons.FAVORITE, color=ft.Colors.PINK),
-                                ft.Icon(ft.Icons.AUDIOTRACK,                color=ft.Colors.GREEN),
-                                ft.Icon(ft.Icons.BEACH_ACCESS, color=ft.Colors.BLUE),
-                            ],
-                        ),
-                    ),
-                        margin=10,
-                        bgcolor=ft.Colors.CYAN_200,
-                        padding=10,
-                        alignment=ft.Alignment.CENTER,
-                        width=200,
-                        height=200,
-                        border_radius=10,
-                        ink=True,
-                    )   
-    
-    pagina.add(contenedor) #add diferido.
+            #Tomamos la cant de autores primero, puesto que vamos a concatenar:
+            resultado = f"cantidad de autores:{diccionario['count']}, "
+
+            #Tomamos el primer elemento de results que es una lista de diccionarios:
+            listDeDicts = diccionario['results']  
+
+            #Filtramos listDeDict para extraer los campos deseados de cada uno de los diccionarios que contienen los datos del autor:
+            listaFiltrada = [{"id": d["id"], "nombre": d["nombre"], "apellido": d["apellido"], "nacimiento": d["nacimiento"], "muerte": d["muerte"]} for d in listDeDicts]
+
+            #Extraemos los pares clave-valor de la lista de diccionarios y los concatenamos en resultado:
+            for diccionario in listaFiltrada:
+                for clave, valor in diccionario.items():
+                    resultado += f"{clave}: {valor}, "
+
+            # 4. Por último depositamos el string en el atributo value del control:
+            txt_resultado.value = resultado
+        
+        finally:
+            # 5. Claro, finalmente actualizamos la pag para ver los resultados:
+            pagina.update()
+
+    txt_resultado = ft.Text()
+    btn_cargar = ft.Button("Cargar Datos", on_click=botonClickeado)
+
+    def borrar_texto(e):
+        txt_resultado.value = ""  # O texto.value = None
+        pagina.update()
+
+    pagina.add(btn_cargar, txt_resultado, ft.Button("Borrar", on_click=borrar_texto))
 
 ft.run(principal)
