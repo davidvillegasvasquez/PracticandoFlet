@@ -1,0 +1,18 @@
+Así se ve un diccionario request.get("http://dirección_url/").json():
+
+{'count': 5, 'next': None, 'previous': None, 'results': [{'url': 'http://127.0.0.1:8000/catalogo/api-todosLosAutores/5/', 'id': 5, 'nombre': 'Jose', 'apellido': "<script>alert('Test alert');</script>", 'nacimiento': '2026-04-06', 'muerte': '2026-04-12', 'libros': []}, {'url': 'http://127.0.0.1:8000/catalogo/api-todosLosAutores/2/', 'id': 2, 'nombre': 'Rómulo', 'apellido': 'Gallegos', 'nacimiento': '1884-08-02', 'muerte': '1969-04-05', 'libros': ['http://127.0.0.1:8000/catalogo/api-todosLoslibros/4/', 'http://127.0.0.1:8000/catalogo/api-todosLoslibros/3/']}, {'url': 'http://127.0.0.1:8000/catalogo/api-todosLosAutores/3/', 'id': 3, 'nombre': 'Harper', 'apellido': 'Lee', 'nacimiento': '1926-04-28', 'muerte': '2016-02-19', 'libros': ['http://127.0.0.1:8000/catalogo/api-todosLoslibros/5/']}, {'url': 'http://127.0.0.1:8000/catalogo/api-todosLosAutores/1/', 'id': 1, 'nombre': 'Carlos', 'apellido': 'Rangel', 'nacimiento': '1929-09-17', 'muerte': '1988-01-15', 'libros': ['http://127.0.0.1:8000/catalogo/api-todosLoslibros/1/', 'http://127.0.0.1:8000/catalogo/api-todosLoslibros/2/']}, {'url': 'http://127.0.0.1:8000/catalogo/api-todosLosAutores/4/', 'id': 4, 'nombre': 'Stefan', 'apellido': 'Zweig', 'nacimiento': '1881-11-28', 'muerte': '1942-02-22', 'libros': ['http://127.0.0.1:8000/catalogo/api-todosLoslibros/6/']}]}
+
+Este diccionario viene de un objeto json de aspecto similar, que el atributo método .json() analiza y convierte a diccionario o lista python según sea el caso.
+
+En este caso vemos que el cuarto par clave-valor ('results'), es una lista de diccionarios, dónde cada diccionario representa un registro del modelo (tabla) Autor. Su campo libros, es una lista con los enlaces a los libros de dicho autor según lo implementado en su serializador hipervinculado.
+
+Otras listas de diccionarios:
+Por ej, si se elige Rómulo Gallegos en el menú desplegable de autores, se tiene:
+
+listaDeTitulos:
+
+['Canaima', 'Doña Barbara']
+
+listaTodosLosTitulosYsusCampos:
+
+[{'url': 'http://127.0.0.1:8000/catalogo/api-todosLoslibros/4/', 'id': 4, 'titulo': 'Canaima', 'autor': 'http://127.0.0.1:8000/catalogo/api-todosLosAutores/2/', 'descripcion': 'En esta obra, la selva del Orinoco es el gran personaje y el motivo que impulsa todas las acciones de sus personajes. La lucha despiadada contra la naturaleza, el terror del caciquismo y el ansia de riquezas, dominio y poder, constituyen el tema principal de esta novela.', 'isbn': '5556322856771'}, {'url': 'http://127.0.0.1:8000/catalogo/api-todosLoslibros/3/', 'id': 3, 'titulo': 'Doña Barbara', 'autor': 'http://127.0.0.1:8000/catalogo/api-todosLosAutores/2/', 'descripcion': 'Doña Bárbara es la novela venezolana más popular: desde su aparición, en 1929, se leyó con avidez quizás porque entre líneas Gallegos expresaba su rebeldía al régimen dictatorial de Juan Vicente Gómez y al atraso que vivía el país. La novela examina el tópico sociológico, de raíz positivista, civilización frente a barbarie en la vida venezolana rural. Entre otros méritos, se destaca la maestría del escritor en cuanto a la creación de personajes, así como también la descripción del paisaje llanero.', 'isbn': '4077862365395'}]
