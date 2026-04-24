@@ -4,15 +4,21 @@ import requests
 
 def principal(pagina: ft.Page):
     pagina.title = "Menú desplegable autor y sus libros"
+    #Variables creadas en botonConectarClickeado y enlazadas (nonlocal) al ámbito (scope) de principal(pagina: ft.Page) porque serán usadas en el resto de las funciónes de este ámbito.
     listaFiltrada = []
     listaTodosLosTitulosYsusCampos = []
     
-    def botonClickeado(e):
+    def botonConectarClickeado(e):
         # 1. Consumir la API.  
-        nonlocal listaFiltrada #Hacemos el enlace de listaFiltrada a la capa exterior inmediata, porque usaremos esta lista en varias funciones dentro de dicha capa, es decir la función principal(pagina: ft.Page)
+        nonlocal listaFiltrada #Hacemos el enlace de listaFiltrada a la capa exterior inmediata, principal(pagina: ft.Page).
 
         try:
             respuestaGet = requests.get("http://127.0.0.1:8000/catalogo/api-todosLosAutores/") #respuestaGet es un objeto Response.
+
+            diccionario = respuestaGet.json() #Analiza el cuerpo de la respuesta como JSON y devuelve un diccionario o lista de Python.
+            
+            #Tomamos el primer elemento de results que es una lista de diccionarios:
+            listDeDicts = diccionario['results']
 
         except:
             pagina.show_dialog(ft.AlertDialog(
@@ -21,12 +27,7 @@ def principal(pagina: ft.Page):
                 modal=True
             ))
 
-        else:
-            diccionario = respuestaGet.json() #Analiza el cuerpo de la respuesta como JSON y devuelve un diccionario o lista de Python.
-            
-            #Tomamos el primer elemento de results que es una lista de diccionarios:
-            listDeDicts = diccionario['results'] 
-   
+        else: 
             #Filtramos listDeDicts para extraer los campos deseados de cada uno de los diccionarios que contienen los datos del autor:
             listaFiltrada = [{"id": d["id"], "nombre": d["nombre"], "apellido": d["apellido"], "libros": d["libros"]} for d in listDeDicts]
 
@@ -44,7 +45,7 @@ def principal(pagina: ft.Page):
             pass  
 
     #Funcion para actualizar el menú de los libros del autor seleccionado:
-    def actualizarAutor(e):
+    def actualizarMenuLibrosDelAutor(e):
         autor_seleccionado = int(e.control.value) #Tenemos que llevar a entero porque los control.value retornan cadenas, y el id en listaFiltrada está expresada como tipo entero.
         
         # Extraemos el diccioanrio que expresa el registro del autor:
@@ -77,7 +78,7 @@ def principal(pagina: ft.Page):
 
         menuLibrosDelAutor.options = dropdown_options_librosDelAutor
         menuLibrosDelAutor.value = None # Resetea el valor seleccionado anterior
-        tablaLibrosDelAutorSelec_2.rows = []  #Borramos lo que quedó en esta tabla.
+        tablaLibrosDelAutorSelec_2.rows = []  #Borramos lo que quedó en esta tabla de la selección anterior en menuLibrosDelAutor.
         #Rellenamos la tabla de datos de los libros del autor seleccionado, tomados de listaTodosLosTitulosYsusCampos que contiene esos datos para el autor seleccionado:
         displayed_items = list(listaTodosLosTitulosYsusCampos)
    
@@ -85,22 +86,16 @@ def principal(pagina: ft.Page):
         tablaLibrosDelAutorSelec.hacerRegistrosApartirDe(displayed_items)
     
     def actTablaLibrosDeAutor(e):
+        """
+        Vamos a meter el libro seleccionado (una sola fila o registro) en el dropdown menuLibrosDelAutor
+        """
         libro_seleccionado = int(e.control.value)
-        dictLibro = next((libro for libro in listaTodosLosTitulosYsusCampos if libro['id'] == libro_seleccionado), None)
-        
-        #displayed_items = list(dictLibro)
-        #print(displayed_items)
-        tablaLibrosDelAutorSelec_2.rows = [
-                ft.DataRow(
-                    cells=[
-                        ft.DataCell(ft.Text(dictLibro["id"])),
-                        ft.DataCell(ft.Text(dictLibro["titulo"])),
-                        ft.DataCell(ft.Text(dictLibro["isbn"])),
-                        ft.DataCell(ft.Text(dictLibro["url"])),
-                    ],
-                )
-        ]
-    
+        dictDelLibroSelec = next((libro for libro in listaTodosLosTitulosYsusCampos if libro['id'] == libro_seleccionado), None)
+
+        #El argumento que acepta el atributo método hacerRegistrosApartirDe() en nuestra clase personalizada, DataTable1(), son listas de diccionarios.
+        #Así que tenemos que hacer una lista de un sólo elemento, cuyo elemento es el libro seleccionado en menuLibrosDelAutor, dictLibro:
+        lista = [dictDelLibroSelec,]
+        tablaLibrosDelAutorSelec_2.hacerRegistrosApartirDe(lista)
 
     #Declaración de los menú desplegables:
     menuAutores = ft.Dropdown(
@@ -108,7 +103,7 @@ def principal(pagina: ft.Page):
                         width=220,
                         label="Autores",
                         options=[],
-                        on_select=actualizarAutor,
+                        on_select=actualizarMenuLibrosDelAutor,
                     )
 
     menuLibrosDelAutor = ft.Dropdown(
@@ -120,12 +115,13 @@ def principal(pagina: ft.Page):
                     )
     
     from paquetes.controles.tablas.datatables import DataTable1
-
+    #Hacemos la tabla que lista todos los libros del autor seleccionad:
     tablaLibrosDelAutorSelec = DataTable1()
 
+    #Tabla de datos (DataTable) de una sola fila o registro que mostrara los datos del libro seleccioando en el menú desplegable menuLibrosDelAutor:
     tablaLibrosDelAutorSelec_2 = DataTable1()
 
-    btn_cargar = ft.Button("Cargar Datos", on_click=botonClickeado)
+    btn_cargar = ft.Button("Cargar Datos", on_click=botonConectarClickeado)
 
     def botonBorrarClickeado(e):
         menuAutores.options=[]
