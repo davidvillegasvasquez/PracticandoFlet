@@ -2,27 +2,43 @@
 import flet as ft
 import requests
 
+URL_APITOKEN = "http://127.0.0.1:8000/api/token/"
+BASE_URL_CATALOGO= "http://127.0.0.1:8000/catalogo"
+
 def principal(pagina: ft.Page):
     pagina.title = "Menú desplegable autor y sus libros"
     #Variables creadas en botonConectarClickeado y enlazadas (nonlocal) al ámbito (scope) de principal(pagina: ft.Page) porque serán usadas en el resto de las funciónes de este ámbito.
     listaFiltrada = []
     listaTodosLosTitulosYsusCampos = []
+    cabezeras = None
     
     def botonConectarClickeado(e):
-        # 1. Consumir la API.  
+        # 1. Consumir la API. 
+        nonlocal cabezeras 
         nonlocal listaFiltrada #Hacemos el enlace de listaFiltrada a la capa exterior inmediata, principal(pagina: ft.Page).
 
         try:
-            respuestaGet = requests.get("http://127.0.0.1:8000/catalogo/api-todosLosAutores/") #respuestaGet es un objeto Response.
+            pedidoDeToken = requests.post(URL_APITOKEN, json={
+                "username": 'david',
+                "password": 'chacha01'
+            })
+            data = pedidoDeToken.json()
+            access_token = data['access']  
+
+            cabezeras = {"Authorization": f"Bearer {access_token}"}
+          
+            respuestaGet = requests.get(f"{BASE_URL_CATALOGO}/api-todosLosAutores/", headers=cabezeras) #respuestaGet es un objeto Response.
 
             diccionario = respuestaGet.json() #Analiza el cuerpo de la respuesta como JSON y devuelve un diccionario o lista de Python.
             
             #Tomamos el primer elemento de results que es una lista de diccionarios:
             listDeDicts = diccionario['results']
 
-        except:
+        except Exception as error:
+            
             pagina.show_dialog(ft.AlertDialog(
-                title=ft.Text("Hubo un error en la conexión."),
+                title=ft.Text("Ocurrió un error..."),
+                content=ft.Text(f'Error: {error}'),
                 actions=[ft.TextButton("Cerrar", on_click=lambda e: pagina.pop_dialog())],
                 modal=True
             ))
@@ -40,9 +56,7 @@ def principal(pagina: ft.Page):
             for autor in listaFiltrada
             ]
             menuAutores.options = dropdown_options_autores   
-
-        finally:
-            pass  
+            menuAutores.update() 
 
     #Funcion para actualizar el menú de los libros del autor seleccionado:
     def actualizarMenuLibrosDelAutor(e):
@@ -59,14 +73,32 @@ def principal(pagina: ft.Page):
         nonlocal listaTodosLosTitulosYsusCampos #Lista de diccionarios-registro de los libros del autor seleccionado:
 
         listaTodosLosTitulosYsusCampos = [] #Reseteamos para limpiar de la última selección de autor.
+
         for url in susLibros:
-            urlLibro = requests.get(url)
-            urlLibro.raise_for_status() # Lanza error si no es 200
-            data = urlLibro.json() #es el diccionario tal como se muestra en el cliente drf.
-            titulo=data['titulo']
-            listaDeTitulos.append(titulo)
-            listaTodosLosTitulosYsusCampos.append(data)
-        
+            try:
+                urlLibroRequest = requests.get(url, headers=cabezeras)
+            except Exception:
+                pagina.show_dialog(ft.AlertDialog(
+                    title=ft.Text("Ocurrió un error..."),
+                    content=ft.Text(f'Error: {str(urlLibroRequest.status_code)}'),
+                    actions=[ft.TextButton("Cerrar", on_click=lambda e: pagina.pop_dialog())],
+                    modal=True
+                ))
+
+            else:
+                if urlLibroRequest.ok: #status_code == 200:
+                    data = urlLibroRequest.json() #es el diccionario tal como se muestra en el cliente drf.
+                    titulo=data['titulo']
+                    listaDeTitulos.append(titulo)
+                    listaTodosLosTitulosYsusCampos.append(data)
+                else:
+                    botonBorrarClickeado(None)
+                    pagina.show_dialog(ft.AlertDialog(
+                    title=ft.Text("Ocurrió un error..."),
+                    content=ft.Text(f'No hubo conexión. Código: {urlLibroRequest.status_code}. Pulse el botón "cargar datos" para intentar nuevamente.'),
+                    actions=[ft.TextButton("Cerrar", on_click=lambda e: pagina.pop_dialog())],
+                    modal=True
+                ))       
         #Por último rellenamos las opciones de menuLibrosDelAutor por comprensión de listas:
         dropdown_options_librosDelAutor = [
             ft.dropdown.Option(
@@ -84,7 +116,9 @@ def principal(pagina: ft.Page):
    
         #El método build_rows está implementado para tomar 4 campos específicos de cada registro de listaTodosLosTitulosYsusCampos:
         tablaLibrosDelAutorSelec.hacerRegistrosApartirDe(displayed_items)
-    
+        
+        #pagina.update()
+
     def actTablaLibrosDeAutor(e):
         """
         Vamos a meter el libro seleccionado (una sola fila o registro) en el dropdown menuLibrosDelAutor
@@ -113,8 +147,11 @@ def principal(pagina: ft.Page):
                         options=[],
                         on_select=actTablaLibrosDeAutor,
                     )
-    
+
+    #Declaramos las datatables:
+
     from paquetes.controles.tablas.datatables import DataTable1
+
     #Hacemos la tabla que lista todos los libros del autor seleccionad:
     tablaLibrosDelAutorSelec = DataTable1()
 
@@ -124,8 +161,10 @@ def principal(pagina: ft.Page):
     btn_cargar = ft.Button("Cargar Datos", on_click=botonConectarClickeado)
 
     def botonBorrarClickeado(e):
-        menuAutores.options=[]
-        menuLibrosDelAutor.options=[]
+        menuAutores.options = []
+        menuLibrosDelAutor.options = []
+        tablaLibrosDelAutorSelec.rows = []
+        tablaLibrosDelAutorSelec_2.rows = []
         pagina.update() 
 
     pagina.add(
