@@ -1,178 +1,132 @@
-#Menú desplegable (dropdown) de autores y sus libros.
+import asyncio
 import flet as ft
-import requests
+import httpx
 
-URL_APITOKEN = "http://127.0.0.1:8000/apitoken/token/"
-BASE_URL_CATALOGO= "http://127.0.0.1:8000/catalogo"
+API_URL = "http://localhost:8000/apiauth/auth"
 
-def principal(pagina: ft.Page):
-    pagina.title = "Menú desplegable autor y sus libros"
-    #Variables creadas en botonConectarClickeado y enlazadas (nonlocal) al ámbito (scope) de principal(pagina: ft.Page) porque serán usadas en el resto de las funciónes de este ámbito.
-    listaFiltrada = []
-    listaTodosLosTitulosYsusCampos = []
-    cabezeras = None
+# Estado global del cliente (mejor mantenido en una clase o variable global)
+auth_state = {
+    "access_token": None,
+    "refresh_token": None,
+    "expires_at": 0, # Timestamp de expiración
+}
+
+async def main(page: ft.Page):
+    page.title = "App Stateless con DRF y Flet"
+
+    # --- 1. Formularios y Pantallas ---
     
-    def botonConectarClickeado(e):
-        # 1. Consumir la API. 
-        nonlocal cabezeras 
-        nonlocal listaFiltrada #Hacemos el enlace de listaFiltrada a la capa exterior inmediata, principal(pagina: ft.Page).
-
-        try:
-            pedidoDeToken = requests.post(URL_APITOKEN, json={
-                "email": 'pepe@correo.com',
-                "password": 'chichi01'
-            })
-            data = pedidoDeToken.json()
-            access_token = data['access']  
-
-            cabezeras = {"Authorization": f"Bearer {access_token}"}
-          
-            respuestaGet = requests.get(f"{BASE_URL_CATALOGO}/apirest/autores/", headers=cabezeras) #respuestaGet es un objeto Response.
-
-            diccionario = respuestaGet.json() #Analiza el cuerpo de la respuesta como JSON y devuelve un diccionario o lista de Python.
-            
-            #Tomamos el primer elemento de results que es una lista de diccionarios:
-            listDeDicts = diccionario['results']
-
-        except Exception as error:
-            
-            pagina.show_dialog(ft.AlertDialog(
-                title=ft.Text("Ocurrió un error..."),
-                content=ft.Text(f'Error: {error}'),
-                actions=[ft.TextButton("Cerrar", on_click=lambda e: pagina.pop_dialog())],
-                modal=True
-            ))
-
-        else: 
-            #Filtramos listDeDicts para extraer los campos deseados de cada uno de los diccionarios que contienen los datos del autor:
-            listaFiltrada = [{"id": d["id"], "nombre": d["nombre"], "apellido": d["apellido"], "libros": d["libros"]} for d in listDeDicts]
-
-            #Así convertimos una lista de diccionarios a una lista de ft.dropdown.Option en su carga inicial y definitiva:
-            dropdown_options_autores = [
-                ft.dropdown.Option(
-                    key=autor["id"],      # El valor que se obtiene al seleccionar
-                    text=f"{autor['nombre']} {autor['apellido']}" #Así hacemos un atributo text compuesto. 
-                )
-            for autor in listaFiltrada
-            ]
-            menuAutores.options = dropdown_options_autores   
-            menuAutores.update() 
-
-    #Funcion para actualizar el menú de los libros del autor seleccionado:
-    def actualizarMenuLibrosDelAutor(e):
-        autor_seleccionado = int(e.control.value) #Tenemos que llevar a entero porque los control.value retornan cadenas, y el id en listaFiltrada está expresada como tipo entero.
+    def go_to_login():
         
-        # Extraemos el diccioanrio que expresa el registro del autor:
-        dictAutor = next((autor for autor in listaFiltrada if autor['id'] == autor_seleccionado), None)
+        page.clean()
+        page.add(login_view)
 
-        #Extraemos la lista de sus libros contenido en el campo 'libros' de dictAutor y que están en forma de hipervínculos:
-        susLibros = dictAutor['libros']
-
-        #Para obtener los títulos de los libros a partir de sus hipervínculos:
-        listaDeTitulos=[] #Solo el título para el dropdown de los libros (títulos)
-        nonlocal listaTodosLosTitulosYsusCampos #Lista de diccionarios-registro de los libros del autor seleccionado:
-
-        listaTodosLosTitulosYsusCampos = [] #Reseteamos para limpiar de la última selección de autor.
-
-        for url in susLibros:
-            try:
-                urlLibroRequest = requests.get(url, headers=cabezeras)
-            except Exception:
-                pagina.show_dialog(ft.AlertDialog(
-                    title=ft.Text("Ocurrió un error..."),
-                    content=ft.Text(f'Error: {str(urlLibroRequest.status_code)}'),
-                    actions=[ft.TextButton("Cerrar", on_click=lambda e: pagina.pop_dialog())],
-                    modal=True
-                ))
-
-            else:
-                if urlLibroRequest.ok: #status_code == 200:
-                    data = urlLibroRequest.json() #es el diccionario tal como se muestra en el cliente drf.
-                    titulo=data['titulo']
-                    listaDeTitulos.append(titulo)
-                    listaTodosLosTitulosYsusCampos.append(data)
-                else:
-                    botonBorrarClickeado(None)
-                    pagina.show_dialog(ft.AlertDialog(
-                    title=ft.Text("Ocurrió un error..."),
-                    content=ft.Text(f'No hubo conexión. Código: {urlLibroRequest.status_code}. Pulse el botón "cargar datos" para intentar nuevamente.'),
-                    actions=[ft.TextButton("Cerrar", on_click=lambda e: pagina.pop_dialog())],
-                    modal=True
-                ))       
-        #Por último rellenamos las opciones de menuLibrosDelAutor por comprensión de listas:
-        dropdown_options_librosDelAutor = [
-            ft.dropdown.Option(
-                key=libro["id"],      # El valor que se obtiene al seleccionar
-                text=libro["titulo"], 
-            )
-            for libro in listaTodosLosTitulosYsusCampos
-        ]
-
-        menuLibrosDelAutor.options = dropdown_options_librosDelAutor
-        menuLibrosDelAutor.value = None # Resetea el valor seleccionado anterior
-        tablaLibrosDelAutorSelec_2.rows = []  #Borramos lo que quedó en esta tabla de la selección anterior en menuLibrosDelAutor.
-        #Rellenamos la tabla de datos de los libros del autor seleccionado, tomados de listaTodosLosTitulosYsusCampos que contiene esos datos para el autor seleccionado:
-        displayed_items = list(listaTodosLosTitulosYsusCampos)
-   
-        #El método build_rows está implementado para tomar 4 campos específicos de cada registro de listaTodosLosTitulosYsusCampos:
-        tablaLibrosDelAutorSelec.hacerRegistrosApartirDe(displayed_items)
-        
-        #pagina.update()
-
-    def actTablaLibrosDeAutor(e):
-        """
-        Vamos a meter el libro seleccionado (una sola fila o registro) en el dropdown menuLibrosDelAutor
-        """
-        libro_seleccionado = int(e.control.value)
-        dictDelLibroSelec = next((libro for libro in listaTodosLosTitulosYsusCampos if libro['id'] == libro_seleccionado), None)
-
-        #El argumento que acepta el atributo método hacerRegistrosApartirDe() en nuestra clase personalizada, DataTable1(), son listas de diccionarios.
-        #Así que tenemos que hacer una lista de un sólo elemento, cuyo elemento es el libro seleccionado en menuLibrosDelAutor, dictLibro:
-        lista = [dictDelLibroSelec,]
-        tablaLibrosDelAutorSelec_2.hacerRegistrosApartirDe(lista)
-
-    #Declaración de los menú desplegables:
-    menuAutores = ft.Dropdown(
-                        editable=True,                            
-                        width=220,
-                        label="Autores",
-                        options=[],
-                        on_select=actualizarMenuLibrosDelAutor,
-                    )
-
-    menuLibrosDelAutor = ft.Dropdown(
-                        editable=False,                            
-                        width=220,
-                        label="Libros",
-                        options=[],
-                        on_select=actTablaLibrosDeAutor,
-                    )
-
-    #Declaramos las datatables:
-
-    from paquetes.controles.tablas.datatables import DataTable1
-
-    #Hacemos la tabla que lista todos los libros del autor seleccionad:
-    tablaLibrosDelAutorSelec = DataTable1()
-
-    #Tabla de datos (DataTable) de una sola fila o registro que mostrara los datos del libro seleccioando en el menú desplegable menuLibrosDelAutor:
-    tablaLibrosDelAutorSelec_2 = DataTable1()
-
-    btn_cargar = ft.Button("Cargar Datos", on_click=botonConectarClickeado)
-
-    def botonBorrarClickeado(e):
-        menuAutores.options = []
-        menuLibrosDelAutor.options = []
-        tablaLibrosDelAutorSelec.rows = []
-        tablaLibrosDelAutorSelec_2.rows = []
-        pagina.update() 
-
-    pagina.add(
-        btn_cargar, 
-        ft.Row(controls=[menuAutores, menuLibrosDelAutor]), 
-        ft.Button("Borrar", on_click=botonBorrarClickeado),
-        tablaLibrosDelAutorSelec,
-        tablaLibrosDelAutorSelec_2,
+    def go_to_main_app():
+        page.clean()
+        page.add(
+            ft.Text("Bienvenido a la App Principal", size=24),
+            ft.Button("Cerrar Sesión", on_click=lambda e:go_to_login())
         )
+        # Iniciar la tarea en segundo plano para el monitoreo del token
+        page.run_task(monitor_token_expiry)
 
-ft.run(principal)
+    # Vista de Login
+    email_field = ft.TextField(label="Email")
+    password_field = ft.TextField(label="Contraseña")
+    error_text = ft.Text(color=ft.Colors.RED)
+
+    async def handle_login(e):
+        try:
+            # Consumo de tu endpoint de DRF
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    f"{API_URL}/login/",
+                    json={"email": email_field.value, "password": password_field.value}
+                )
+            
+            if response.status_code == 200:
+                data = response.json()
+                auth_state["access_token"] = data["access"]
+                auth_state["refresh_token"] = data["refresh"]
+                # Ajusta esto según el tiempo de vida de tu JWT (ej: 300 segundos)
+                auth_state["expires_at"] = asyncio.get_event_loop().time() + 20 
+                go_to_main_app()
+            else:
+                error_text.value = "Credenciales inválidas"
+                page.update()
+        except Exception as ex:
+            error_text.value = f"Error de conexión: {ex}"
+            page.update()
+
+    login_view = ft.Column([
+        ft.Text("Iniciar Sesión", size=30),
+        email_field,
+        password_field,
+        ft.Button("Entrar", on_click=handle_login),
+        error_text
+    ], alignment=ft.MainAxisAlignment.CENTER)
+
+    # --- 2. Cuadro Modal de Advertencia ---
+    
+    async def renew_token(e):
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    f"{API_URL}/token/refresh/",
+                    json={"refresh": auth_state["refresh_token"]}
+                )
+            if response.status_code == 200:
+                data = response.json()
+                auth_state["access_token"] = data["access"]
+                auth_state["expires_at"] = asyncio.get_event_loop().time() + 20
+                #page.dialog.open = False
+                page.pop_dialog()
+                page.update()
+            else:
+                # Si el refresh token también expiró, forzar cierre de sesión
+                #page.dialog.open = False
+                page.pop_dialog()
+                go_to_login()
+        except Exception:
+            page.pop_dialog()
+            #page.dialog.open = False
+            go_to_login()
+
+    warning_dialog = ft.AlertDialog(
+        title=ft.Text("Sesión a punto de expirar"),
+        content=ft.Text("Tu sesión caducará en 10 segundos. ¿Deseas continuar?"),
+        actions=[
+            ft.Button("Renovar sesión", on_click=renew_token),
+        ],
+    )
+
+    # --- 3. Monitoreo Asíncrono del Token ---
+    
+    async def monitor_token_expiry():
+        warning_dialog_shown = False
+        while True:
+            await asyncio.sleep(1) # Revisa el estado cada 1 segundos
+            
+            if not auth_state["access_token"]:
+                break # Si el usuario cerró sesión, detener monitoreo
+
+            current_time = asyncio.get_event_loop().time()
+            time_left = auth_state["expires_at"] - current_time
+            
+            # Mostrar modal faltando 10 segundos (y si no está ya abierto)
+            if time_left <= 10 and not warning_dialog_shown:
+                page.show_dialog(warning_dialog)
+                page.update()
+                warning_dialog_shown = True
+            
+            # Al expirar el tiempo, retornar al login
+            elif time_left <= 0:
+                page.pop_dialog()
+                go_to_login()
+                break # Terminar el ciclo del timer
+
+    # Inicializar en pantalla de login
+    page.pop_dialog()
+    go_to_login()
+
+ft.run(main)
