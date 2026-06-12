@@ -13,11 +13,13 @@ auth_state = {
 
 async def main(page: ft.Page):
     page.title = "App Stateless con DRF y Flet"
-
+    tarea_activa = True
     # --- 1. Formularios y Pantallas ---
     
     def go_to_login():
-        
+        nonlocal tarea_activa
+        tarea_activa = False
+        error_text.value = ""
         page.clean()
         page.add(login_view)
 
@@ -28,6 +30,8 @@ async def main(page: ft.Page):
             ft.Button("Cerrar Sesión", on_click=lambda e:go_to_login())
         )
         # Iniciar la tarea en segundo plano para el monitoreo del token
+        nonlocal tarea_activa
+        tarea_activa = True
         page.run_task(monitor_token_expiry)
 
     # Vista de Login
@@ -49,7 +53,7 @@ async def main(page: ft.Page):
                 auth_state["access_token"] = data["access"]
                 auth_state["refresh_token"] = data["refresh"]
                 # Ajusta esto según el tiempo de vida de tu JWT (ej: 300 segundos)
-                auth_state["expires_at"] = asyncio.get_event_loop().time() + 20 
+                auth_state["expires_at"] = asyncio.get_event_loop().time() + 10 
                 go_to_main_app()
             else:
                 error_text.value = "Credenciales inválidas"
@@ -78,8 +82,8 @@ async def main(page: ft.Page):
             if response.status_code == 200:
                 data = response.json()
                 auth_state["access_token"] = data["access"]
-                auth_state["expires_at"] = asyncio.get_event_loop().time() + 20
-                #page.dialog.open = False
+                auth_state["expires_at"] = asyncio.get_event_loop().time() + 10
+                page.run_task(monitor_token_expiry)
                 page.pop_dialog()
                 page.update()
             else:
@@ -89,12 +93,11 @@ async def main(page: ft.Page):
                 go_to_login()
         except Exception:
             page.pop_dialog()
-            #page.dialog.open = False
             go_to_login()
 
     warning_dialog = ft.AlertDialog(
         title=ft.Text("Sesión a punto de expirar"),
-        content=ft.Text("Tu sesión caducará en 10 segundos. ¿Deseas continuar?"),
+        content=ft.Text("Tu sesión caducará en 5 segundos. ¿Deseas continuar?"),
         actions=[
             ft.Button("Renovar sesión", on_click=renew_token),
         ],
@@ -102,7 +105,7 @@ async def main(page: ft.Page):
 
     # --- 3. Monitoreo Asíncrono del Token ---
     
-    async def monitor_token_expiry():
+    async def monitor_token_expiry():  
         warning_dialog_shown = False
         while True:
             await asyncio.sleep(1) # Revisa el estado cada 1 segundos
@@ -110,11 +113,14 @@ async def main(page: ft.Page):
             if not auth_state["access_token"]:
                 break # Si el usuario cerró sesión, detener monitoreo
 
+            if not tarea_activa:
+                break
+
             current_time = asyncio.get_event_loop().time()
             time_left = auth_state["expires_at"] - current_time
             
             # Mostrar modal faltando 10 segundos (y si no está ya abierto)
-            if time_left <= 10 and not warning_dialog_shown:
+            if time_left <= 5 and not warning_dialog_shown:
                 page.show_dialog(warning_dialog)
                 page.update()
                 warning_dialog_shown = True
