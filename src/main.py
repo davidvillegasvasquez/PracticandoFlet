@@ -1,3 +1,4 @@
+#autenStateless.py
 import asyncio
 import flet as ft
 import httpx
@@ -13,12 +14,13 @@ auth_state = {
 
 async def main(page: ft.Page):
     page.title = "App Stateless con DRF y Flet"
-    tarea_activa = True
+    monitoreo_encendido = True
     # --- 1. Formularios y Pantallas ---
     
     def go_to_login():
-        nonlocal tarea_activa
-        tarea_activa = False
+        nonlocal monitoreo_encendido
+        print(f"Ver monitoreo_encendido desde go_to_login: {monitoreo_encendido}")
+        monitoreo_encendido = False
         error_text.value = ""
         page.clean()
         page.add(login_view)
@@ -30,8 +32,8 @@ async def main(page: ft.Page):
             ft.Button("Cerrar Sesión", on_click=lambda e:go_to_login())
         )
         # Iniciar la tarea en segundo plano para el monitoreo del token
-        nonlocal tarea_activa
-        tarea_activa = True
+        nonlocal monitoreo_encendido
+        monitoreo_encendido = True
         page.run_task(monitor_token_expiry)
 
     # Vista de Login
@@ -88,7 +90,6 @@ async def main(page: ft.Page):
                 page.update()
             else:
                 # Si el refresh token también expiró, forzar cierre de sesión
-                #page.dialog.open = False
                 page.pop_dialog()
                 go_to_login()
         except Exception:
@@ -97,7 +98,7 @@ async def main(page: ft.Page):
 
     warning_dialog = ft.AlertDialog(
         title=ft.Text("Sesión a punto de expirar"),
-        content=ft.Text("Tu sesión caducará en 5 segundos. ¿Deseas continuar?"),
+        content=ft.Text("Tu sesión caducará en 5 segundos. ¿Deseas prorrogarla por 10 seg más ?"),
         actions=[
             ft.Button("Renovar sesión", on_click=renew_token),
         ],
@@ -107,14 +108,11 @@ async def main(page: ft.Page):
     
     async def monitor_token_expiry():  
         warning_dialog_shown = False
-        while True:
+        while monitoreo_encendido:
             await asyncio.sleep(1) # Revisa el estado cada 1 segundos
             
             if not auth_state["access_token"]:
                 break # Si el usuario cerró sesión, detener monitoreo
-
-            if not tarea_activa:
-                break
 
             current_time = asyncio.get_event_loop().time()
             time_left = auth_state["expires_at"] - current_time
@@ -127,12 +125,17 @@ async def main(page: ft.Page):
             
             # Al expirar el tiempo, retornar al login
             elif time_left <= 0:
-                page.pop_dialog()
-                go_to_login()
-                break # Terminar el ciclo del timer
-
+                break
+                #page.pop_dialog()
+                #print(f"Ver monitoreo_encendido desde elif time_left <= 0: {monitoreo_encendido}")
+                #go_to_login()
+                #break
+        page.pop_dialog()
+        print(f"Ver monitoreo_encendido desde monitor_token_expiry <= 0: {monitoreo_encendido}")
+        go_to_login()
     # Inicializar en pantalla de login
     page.pop_dialog()
+    page.update() #
     go_to_login()
 
 ft.run(main)
