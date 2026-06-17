@@ -1,23 +1,29 @@
 import flet as ft
 
-barraAppBar = ft.AppBar(
-    leading=ft.Icon(ft.Icons.MENU),
-    title=ft.Text("App de comer moco"),
-    bgcolor=ft.Colors.SURFACE_CONTAINER,
-    actions=[
-        ft.IconButton(ft.Icons.SEARCH),
-        ft.IconButton(ft.Icons.MORE_VERT),
-    ],
-)
+#Así hacemos una barra personalizada para ser utilizada por un cliente que la importe:
 
-barraBottomAppBar = ft.BottomAppBar(
-    bgcolor=ft.Colors.SURFACE_CONTAINER_LOW,
-    content=ft.Row(
-        alignment=ft.MainAxisAlignment.SPACE_AROUND,
-        controls=[
-            ft.IconButton(ft.Icons.MENU),
-            ft.IconButton(ft.Icons.SEARCH),
-            ft.IconButton(ft.Icons.SETTINGS),
-        ],
-    ),
-)
+@ft.control
+class BarraAppBar(ft.AppBar):
+    def __init__(self, titulo):
+        super().__init__()      
+        self.leading=ft.Icon(ft.Icons.MENU),
+        self.title=ft.Text(titulo)
+        self.bgcolor=ft.Colors.SURFACE_CONTAINER,
+        self.actions=[
+                ft.IconButton(ft.Icons.SEARCH),
+                ft.IconButton(ft.Icons.MORE_VERT),
+            ]
+
+@ft.control
+class BarraBottomAppBar(ft.BottomAppBar):
+    def __init__(self):
+        super().__init__()
+        self.bgcolor=ft.Colors.SURFACE_CONTAINER_LOW,
+        self.content=ft.Row(
+            alignment=ft.MainAxisAlignment.SPACE_AROUND,
+            controls=[
+                ft.IconButton(ft.Icons.MENU),
+                ft.IconButton(ft.Icons.SEARCH),
+                ft.IconButton(ft.Icons.SETTINGS),
+            ],
+        )

@@ -1,6 +1,6 @@
 #Atributos propiedad del control Page.
 import flet as f
-#from paquetes.controles.barras.barras import barraAppBar, barraBottomAppBar
+from paquetes.controles.barras.barras import BarraAppBar, BarraBottomAppBar
 
 @f.control
 class BotonPersonalizado(f.Button):
@@ -32,32 +32,11 @@ def principal(pagina: f.Page):
         funcionPasada=imprimirEnConsola
     )
     
-    pagina.appbar = f.AppBar(
-        leading=f.Icon(f.Icons.MENU),
-        title=f.Text("App de comer moco"),
-        bgcolor=f.Colors.SURFACE_CONTAINER,
-        actions=[
-            f.IconButton(f.Icons.SEARCH),
-            f.IconButton(f.Icons.MORE_VERT),
-        ],
-    )
+    #Así implementamos una barra personalizada importada desde paquetes para asignarlos a los atributos de la página en este caso. Recuerde que esos controles personalizados no pueden ser controles básicos, sino personalizados en forma de una clase:
 
-    pagina.bottom_appbar = f.BottomAppBar(
-        bgcolor=f.Colors.SURFACE_CONTAINER_LOW,
-        content=f.Row(
-            alignment=f.MainAxisAlignment.SPACE_AROUND,
-            controls=[
-                f.IconButton(f.Icons.MENU),
-                f.IconButton(f.Icons.SEARCH),
-                f.IconButton(f.Icons.SETTINGS),
-            ],
-        ),
-    )
-    #Así se importan controles sencillos desde paquetes para asignarlos a los atributos de la página. Claro, se supone que el control importado a asignar sea del tipo del atributo: Esto arroja error al rato. Debe ser funciones o clases.
-    #pagina.appbar = barraAppBar
-    #pagina.bottom_appbar = barraBottomAppBar
-
-    #pagina.add(barraAppBar, boton, barraBottomAppBar)
+    pagina.appbar = BarraAppBar("App de comer Mocos")
+    pagina.bottom_appbar = BarraBottomAppBar()
+   
     pagina.add(boton)
-
+    
 f.run(principal)
