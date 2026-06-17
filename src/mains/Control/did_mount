@@ -1,0 +1,31 @@
+El did_mount método en Flet es un gancho de ciclo de vida para controles personalizados( UserControl). Se activa inmediatamente después de que se agrega un control al árbol de páginas y se le asigna un uid. Es ideal para inicializar tareas asíncronas o recuperar datos iniciales.Para una demostración visual de los ciclos de vida y la inicialización de los controles personalizados, incluido did_mount:1 metroCurso Flet: 75 Inicialización en el constructor de un...Ingeniero John Ortiz OrdoñezYouTube · 28 de noviembre de 2022Cómo funcionaCuando un control personalizado anula un comportamiento predeterminado did_mount(), obtiene acceso al self.pagecontexto completamente montado. Esto permite acceder de forma segura al objeto de página, iniciar subprocesos en segundo plano o asignar dinámicamente propiedades que requieren que el control esté vinculado a la página.Casos de uso comunesTareas en segundo plano: Ejecución de procesos en segundo plano, como temporizadores o sondeos de API.Obtención de datos externos: Realizar llamadas asíncronas a la red o a la base de datos para actualizar la interfaz de usuario al cargarse.Asignaciones a nivel de página: Vincular variables a nivel de página (como page.drawer) a elementos dentro del control personalizado.Ejemplo de códigoAquí te mostramos cómo implementar did_mountun temporizador en segundo plano (como una cuenta regresiva) cuando se agrega el control a la vista:pitónimport flet as ft
+import asyncio
+
+class Countdown(ft.Text):
+    def __init__(self, seconds):
+        super().__init__()
+        self.seconds = seconds
+        self.running = False
+
+    def did_mount(self):
+        self.running = True
+        self.page.run_task(self.update_timer)
+
+    def will_unmount(self):
+        self.running = False
+
+    async def update_timer(self):
+        while self.seconds > 0 and self.running:
+            mins, secs = divmod(self.seconds, 60)
+            self.value = "{:02d}:{:02d}".format(mins, secs)
+            self.update()
+            await asyncio.sleep(1)
+            self.seconds -= 1
+
+def main(page: ft.Page):
+    page.add(Countdown(10))
+
+ft.app(target=main)
+
+Mejores prácticas y errores comunes
+Evite los interbloqueos: Nunca llame self.update()dentro del did_mountmétodo de un estándar UserControl, ya que puede provocar bloqueos de estado. En su lugar, utilice did_mountpara activar su tarea o método en segundo plano y llame update()de forma segura dentro de esa tarea asíncrona.Combinado con will_unmount: Si inicias bucles, tareas o detectores de eventos en did_mount, asegúrate de cerrarlos o cambiar una bandera booleana en will_unmountpara evitar fugas de memoria cuando se elimine el control.Para obtener más detalles sobre los ciclos de vida de los componentes, consulte la documentación oficial de Flet Custom Controls .

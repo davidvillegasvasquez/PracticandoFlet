@@ -8,16 +8,16 @@ authors = [
     { name = "Flet developer", email = "you@example.com" }
 ]
 dependencies = [
-    "flet>=0.82.2",
+    "flet[all]>=0.85.3",
     "flet-desktop-light",
     "pillow>=12.1.1",
 ]
 
 [dependency-groups]
 dev = [
-    "flet-cli>=0.82.2",
-    "flet-desktop-light>=0.82.2",
-    "flet-web>=0.82.2",
+    "flet-cli>=0.85.3",
+    "flet-desktop-light>=0.85.3",
+    "flet-web>=0.85.3",
 ]
 
 [tool.flet]

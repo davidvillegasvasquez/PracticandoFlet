@@ -1,24 +1,24 @@
 from dataclasses import field
-import flet as f
+import flet as ft
 
 #Tarea: hacer una clase botón genérica de enviar
-#botonEnviar = f.Button("Enviar", on_click=send_click)
+#botonEnviar = ft.Button("Enviar", on_click=send_click)
 
-@f.control
-class CalcButton(f.Button):
+@ft.control
+class CalcButton(ft.Button):
     expand: int = field(default_factory=lambda: 1)
 
-@f.control
+@ft.control
 class DigitButton(CalcButton):
-    bgcolor: f.Colors = f.Colors.WHITE_24
-    color: f.Colors = f.Colors.WHITE
+    bgcolor: ft.Colors = ft.Colors.WHITE_24
+    color: ft.Colors = ft.Colors.WHITE
 
-@f.control
+@ft.control
 class ActionButton(CalcButton):
-    bgcolor: f.Colors = f.Colors.ORANGE
-    color: f.Colors = f.Colors.WHITE
+    bgcolor: ft.Colors = ft.Colors.ORANGE
+    color: ft.Colors = ft.Colors.WHITE
 
-@f.control
+@ft.control
 class ExtraActionButton(CalcButton):
-    bgcolor: f.Colors = f.Colors.BLUE_GREY_100
-    color: f.Colors = f.Colors.BLACK
+    bgcolor: ft.Colors = ft.Colors.BLUE_GREY_100
+    color: ft.Colors = ft.Colors.BLACK
