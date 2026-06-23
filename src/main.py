@@ -1,42 +1,143 @@
-#Atributos propiedad del control Page.
-import flet as f
-from paquetes.controles.barras.barras import BarraAppBar, BarraBottomAppBar
+import asyncio
 
-@f.control
-class BotonPersonalizado(f.Button):
-    def __init__(self, texto: str, icono=None, funcionPasada=None):
-        super().__init__()
-        self.content=texto
-        self.icon=icono if icono else f.Icons.ADD
-        self.on_click=funcionPasada #funcionPasada
-        self.color="black"
-    
-    def build(self):
-        self.bgcolor="green"
+import flet as ft
 
-def principal(pagina: f.Page):
-    pagina.tittle="Atributos de Page"
 
-    def imprimirEnConsola(evento):
-        print(f'pagina.client_ip = {pagina.client_ip}')
-        print(f'pagina.client_user_agent = {pagina.client_user_agent}')
-        print(f'pagina.platform = {pagina.platform}')
-        print(f'pagina.platform_brightness = {pagina.platform_brightness}')
-        print(f'pagina.route = {pagina.route}')
-        print('================================')
+def main(page: ft.Page):
+    page.title = "Drawer navigation"
 
-    
-    boton=BotonPersonalizado(
-        texto="click aquí",
-        icono=None,
-        funcionPasada=imprimirEnConsola
-    )
-    
-    #Así implementamos una barra personalizada importada desde paquetes para asignarlos a los atributos de la página en este caso. Recuerde que esos controles personalizados no pueden ser controles básicos, sino personalizados en forma de una clase:
+    async def handle_change(e):
+        if e.control.selected_index == 0:
+            await page.push_route("/")
+        elif e.control.selected_index == 1:
+            await page.push_route("/store")
+        elif e.control.selected_index == 2:
+            await page.push_route("/about")
 
-    pagina.appbar = BarraAppBar("App de comer Mocos")
-    pagina.bottom_appbar = BarraBottomAppBar()
-   
-    pagina.add(boton)
-    
-f.run(principal)
+    def create_drawer(selected_index=0):
+        return ft.NavigationDrawer(
+            selected_index=selected_index,
+            on_change=handle_change,
+            controls=[
+                ft.Container(height=12),
+                ft.NavigationDrawerDestination(
+                    label="Home",
+                    icon=ft.Icons.HOME_OUTLINED,
+                    selected_icon=ft.Icon(ft.Icons.HOME),
+                ),
+                ft.Divider(thickness=2),
+                ft.NavigationDrawerDestination(
+                    label="Store",
+                    icon=ft.Icon(ft.Icons.STORE_OUTLINED),
+                    selected_icon=ft.Icon(ft.Icons.STORE),
+                ),
+                ft.NavigationDrawerDestination(
+                    label="About",
+                    icon=ft.Icon(ft.Icons.PHONE_OUTLINED),
+                    selected_icon=ft.Icons.PHONE,
+                ),
+            ],
+        )
+
+    async def show_drawer():
+        await page.show_drawer()
+
+    def route_change(route):
+        page.views.clear()
+        page.views.append(
+            ft.View(
+                route="/",
+                controls=[
+                    ft.SafeArea(
+                        content=ft.Column(
+                            controls=[
+                                ft.AppBar(
+                                    title=ft.Text("Home", expand=True),
+                                    bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
+                                    leading=ft.IconButton(
+                                        ft.Icons.MENU, on_click=show_drawer
+                                    ),
+                                ),
+                                ft.Text("Welcome to Home Page"),
+                            ]
+                        )
+                    )
+                ],
+                drawer=create_drawer(selected_index=0) if page.route == "/" else None,
+            )
+        )
+
+        if page.route == "/store":
+            page.views.append(
+                ft.View(
+                    route="/store",
+                    controls=[
+                        ft.SafeArea(
+                            content=ft.Column(
+                                controls=[
+                                    ft.AppBar(
+                                        title=ft.Text("Store", expand=True),
+                                        bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
+                                        leading=ft.IconButton(
+                                            ft.Icons.MENU, on_click=show_drawer
+                                        ),
+                                        automatically_imply_leading=False,
+                                    ),
+                                    ft.Text("Welcome to Store Page"),
+                                    ft.Button(
+                                        "Go About",
+                                        on_click=lambda _: asyncio.create_task(
+                                            page.push_route("/about")
+                                        ),
+                                    ),
+                                ]
+                            )
+                        )
+                    ],
+                    drawer=create_drawer(selected_index=1),
+                )
+            )
+
+        if page.route == "/about":
+            page.views.append(
+                ft.View(
+                    route="/about",
+                    controls=[
+                        ft.SafeArea(
+                            content=ft.Column(
+                                controls=[
+                                    ft.AppBar(
+                                        title=ft.Text("About", expand=True),
+                                        bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
+                                        leading=ft.IconButton(
+                                            ft.Icons.MENU, on_click=show_drawer
+                                        ),
+                                        automatically_imply_leading=False,
+                                    ),
+                                    ft.Text("Welcome to About Page"),
+                                    ft.Button(
+                                        "Go Store",
+                                        on_click=lambda _: asyncio.create_task(
+                                            page.push_route("/store")
+                                        ),
+                                    ),
+                                ]
+                            )
+                        )
+                    ],
+                    drawer=create_drawer(selected_index=2),
+                )
+            )
+        page.update()
+
+    async def view_pop(view):
+        page.views.pop()
+        top_view = page.views[-1]
+        await page.push_route(top_view.route)
+
+    page.on_route_change = route_change
+    page.on_view_pop = view_pop
+    route_change(page.route)
+
+if __name__ == "__main__":
+    ft.run(main)

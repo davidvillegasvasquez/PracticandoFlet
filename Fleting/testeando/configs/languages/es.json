@@ -1,0 +1,17 @@
+{
+  "app": {
+    "name": "Testeando"
+  },
+  "menu": {
+    "home": "Inicio",
+    "settings": "Configuración",
+    "help": "Ayuda"
+  },
+  "home": {
+    "title": "Bienvenido a Testeando"
+  },
+  "settings": {
+    "title": "Configuración",
+    "language": "Idioma"
+  }
+}
