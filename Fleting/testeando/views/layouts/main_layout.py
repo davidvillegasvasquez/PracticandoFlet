@@ -72,7 +72,7 @@ class MainLayout(ft.Column):
         paths = []
 
         for r in ROUTES:
-            if r.get("show_in_bottom"): #and (r.get("label") != "Perfilusuario"):
+            if r.get("show_in_bottom"): # and (r.get("label") != "Perfilusuario"):
                 destinations.append(
                     ft.NavigationBarDestination(
                         icon=r["icon"],
@@ -90,7 +90,7 @@ class MainLayout(ft.Column):
             if AppState.current_route in paths else 0,
             on_change=on_change,
         )
-
+#MainLayout sin el menú hamburguesa: Para ello reescribimos el atributo método _top_bar. Note como configuramos los constructores para las clases padres:
 class MainLayout2(MainLayout):
     def __init__(self, *args, **kwargs):
         # **kwargs catches 'page' and prevents the TypeError
@@ -99,29 +99,4 @@ class MainLayout2(MainLayout):
     def _top_bar(self):
         return ft.AppBar(
             title=ft.Text(I18n.t("app.name"))
-        )
-
-        # ---------- BOTTOM BAR ----------
-    def _bottom_bar(self):
-        destinations = []
-        paths = []
-
-        for r in ROUTES:
-            if r.get("show_in_bottom") and (r.get("label") != "Perfilusuario"):
-                destinations.append(
-                    ft.NavigationBarDestination(
-                        icon=r["icon"],
-                        label=I18n.t(r["label"]),
-                    )
-                )
-                paths.append(r["path"])
-
-        def on_change(e):
-            self.router.navigate(paths[e.control.selected_index])
-
-        return ft.NavigationBar(
-            destinations=destinations,
-            selected_index=paths.index(AppState.current_route)
-            if AppState.current_route in paths else 0,
-            on_change=on_change,
         )

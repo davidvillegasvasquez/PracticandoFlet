@@ -7,7 +7,7 @@ import runtime_imports
 
 logger = get_logger("App")
 
-def main(page: ft.Page):
+async def main(page: ft.Page):
     try:
         page.assets_dir = "assets"
 
@@ -20,7 +20,6 @@ def main(page: ft.Page):
         I18n.load("es")
 
         from core.router import Router
-        #from configs.routes import routes
 
         router = Router(page)
         router.navigate("/")

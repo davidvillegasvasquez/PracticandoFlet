@@ -1,7 +1,6 @@
 #autenStateless3.py
 import asyncio
 import flet as ft
-#import httpx
 from paquetes.aplicaciones.clasesFlet import DropdownAutorYsusLibros, widget_ejemplo
 
 API_AUTH = "http://localhost:8000/apiauth/auth"

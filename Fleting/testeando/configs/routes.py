@@ -4,10 +4,19 @@ import importlib
 
 ROUTES = [
     {
+        "path": "/login",
+        "view": "views.pages.login_view.LoginView",
+        "label": "Login",
+        "icon": ft.Icons.LOGIN,
+        "show_in_top": True,
+        "show_in_bottom": True,
+    },
+
+    {
         "path": "/perfilusuario",
         "view": "views.pages.perfilusuario_view.PerfilusuarioView",
         "label": "Perfilusuario",
-        "icon": ft.Icons.CHEVRON_RIGHT,
+        "icon": ft.Icons.FACE, #ft.Icons.PERSON,
         "show_in_top": True,
         "show_in_bottom": True,
     },
