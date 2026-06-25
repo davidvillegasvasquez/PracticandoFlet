@@ -1,6 +1,6 @@
 
 import flet as ft
-from core.state import AppState
+from core.state import AppState as AS
 from core.i18n import I18n
 from configs.routes import ROUTES
 
@@ -19,6 +19,12 @@ class MainLayout(ft.Column):
         # TOP BAR
         self.controls.append(self._top_bar())
 
+        self.usuario = ft.Text(AS.usuario)
+        self.controls.append(self.usuario)
+
+        self.boton_salir = ft.Button("logout", on_click=self.salir, visible=False)
+        self.controls.append(self.boton_salir)
+
         # CONTENT
         self.controls.append(
             ft.Container(
@@ -29,8 +35,13 @@ class MainLayout(ft.Column):
         )
 
         # BOTTOM BAR (mobile / tablet)
-        if AppState.device != "desktop":
+        if AS.device != "desktop":
             self.controls.append(self._bottom_bar())
+
+    def salir(self, e):
+        AS.usuario = None
+        self.boton_salir.visible = False
+        self._page.update()
 
     # ---------- TOP BAR ----------
     def _top_bar(self):
@@ -86,8 +97,8 @@ class MainLayout(ft.Column):
 
         return ft.NavigationBar(
             destinations=destinations,
-            selected_index=paths.index(AppState.current_route)
-            if AppState.current_route in paths else 0,
+            selected_index=paths.index(AS.current_route)
+            if AS.current_route in paths else 0,
             on_change=on_change,
         )
 #MainLayout sin el menú hamburguesa: Para ello reescribimos el atributo método _top_bar. Note como configuramos los constructores para las clases padres:

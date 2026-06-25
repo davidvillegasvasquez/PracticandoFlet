@@ -13,13 +13,13 @@ class LoginController:
     def get_email(self):
         return self.model.email
 
-    def get_password(self):
+    def get_pass(self):
         return self.model.password
 
     def set_email(self, email):
         self.model.email = email
 
-    def set_password(self, password):
+    def set_pass(self, password):
         self.model.password = password
 
 

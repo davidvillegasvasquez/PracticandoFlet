@@ -16,9 +16,9 @@ ROUTES = [
         "path": "/perfilusuario",
         "view": "views.pages.perfilusuario_view.PerfilusuarioView",
         "label": "Perfilusuario",
-        "icon": ft.Icons.FACE, #ft.Icons.PERSON,
+        "icon": ft.Icons.PERSON, #ft.Icons.FACE,
         "show_in_top": True,
-        "show_in_bottom": True,
+        "show_in_bottom": False,
     },
 
     {

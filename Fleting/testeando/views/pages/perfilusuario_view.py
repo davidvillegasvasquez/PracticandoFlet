@@ -16,7 +16,7 @@ class PerfilusuarioView:
             spacing=16,
         )
 
-        return MainLayout2(
+        return MainLayout(
             page=self.page,
             content=content,
             router=self.router,
