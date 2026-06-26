@@ -6,13 +6,15 @@ import flet as ft
 class BarraAppBar(ft.AppBar):
     def __init__(self, titulo):
         super().__init__()      
-        self.leading=ft.Icon(ft.Icons.MENU),
+        self.leading=ft.IconButton(ft.Icons.MENU)
         self.title=ft.Text(titulo)
-        self.bgcolor=ft.Colors.SURFACE_CONTAINER,
+        self.bgcolor=ft.Colors.SURFACE_CONTAINER
+        #self.usuario=ft.Text("david")
         self.actions=[
-                ft.IconButton(ft.Icons.SEARCH),
-                ft.IconButton(ft.Icons.MORE_VERT),
-            ]
+            ft.IconButton(ft.Icons.SEARCH),
+            ft.IconButton(ft.Icons.MORE_VERT),
+            ft.Text("david"),   
+        ]
 
 @ft.control
 class BarraBottomAppBar(ft.BottomAppBar):

@@ -22,3 +22,15 @@ class ActionButton(CalcButton):
 class ExtraActionButton(CalcButton):
     bgcolor: ft.Colors = ft.Colors.BLUE_GREY_100
     color: ft.Colors = ft.Colors.BLACK
+
+@ft.control
+class BotonPersonalizado(ft.Button):
+    def __init__(self, texto: str, icono=None, funcionPasada=None):
+        super().__init__()
+        self.content=texto
+        self.icon=icono if icono else ft.Icons.ADD
+        self.on_click=funcionPasada #funcionPasada
+        self.color="black"
+    
+    def build(self):
+        self.bgcolor="green"

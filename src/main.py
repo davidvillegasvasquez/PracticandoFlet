@@ -1,146 +1,68 @@
-#autenStateless3.py
-import asyncio
-import flet as ft
-#import httpx
-from paquetes.aplicaciones.clasesFlet import DropdownAutorYsusLibros, widget_ejemplo
+#ControlesPersonalizados.py
+import flet as f
+from paquetes.controles.barras.barras import BarraAppBar, BarraBottomAppBar
+from paquetes.controles.botones.botones import BotonPersonalizado
 
-API_AUTH = "http://localhost:8000/apiauth/auth"
+def principal(pagina: f.Page):
+    pagina.tittle="Atributos de Page"
 
-# Estado global del cliente (mejor mantenido en una clase o variable global)
-auth_state = {
-    "access_token": None,
-    "refresh_token": None,
-    "expires_at": 0, # Timestamp de expiración
-}
+    def imprimirEnConsola(evento):
+        print(f'pagina.client_ip = {pagina.client_ip}')
+        print(f'pagina.client_user_agent = {pagina.client_user_agent}')
+        print(f'pagina.platform = {pagina.platform}')
+        print(f'pagina.platform_brightness = {pagina.platform_brightness}')
+        print(f'pagina.route = {pagina.route}')
+        print('================================')
 
-async def main(page: ft.Page):
-    page.title = "App Stateless con DRF y Flet"
-    monitoreo_encendido = True
-    # --- 1. Formularios y Pantallas ---
-    
-    def go_to_login():
-        nonlocal monitoreo_encendido
-        print(f"Ver monitoreo_encendido desde go_to_login: {monitoreo_encendido}")
-        monitoreo_encendido = False
-        error_text.value = ""
-        page.clean()
-        page.add(login_view)
-
-    def go_to_main_app():
-        page.clean()
-        #pagina = DropdownAutorYsusLibros(page, auth_state["access_token"])
-        #cuadtex = widget_ejemplo(page)
-        page.add(
-            DropdownAutorYsusLibros(auth_state["access_token"]),
-            ft.Button("Cerrar Sesión", on_click=lambda e:go_to_login()),
-        )
-        # Iniciar la tarea en segundo plano para el monitoreo del token
-        page.update()
-        nonlocal monitoreo_encendido
-        monitoreo_encendido = True
-        page.run_task(monitor_token_expiry)
-
-    # Vista de Login
-    email_field = ft.TextField(label="Email")
-    password_field = ft.TextField(label="Contraseña")
-    error_text = ft.Text(color=ft.Colors.RED)
-
-    def handle_login(e):
-        # 1. Enviar datos a tu backend con SimpleJWT
-        login_url = f"{API_AUTH}/login/" # Cambia esto por tu URL
-        payload = {
-            "username": username_field.value,
-            "password": password_field.value
-        }
-
+    def toggleVisibleUser(evento):
         try:
-            response = requests.post(login_url, json=payload)
-            
-            if response.status_code == 200:
-                data = response.json()
-                auth_state["access_token"] = data["access"]
-                auth_state["refresh_token"] = data["refresh"]
-                # Ajusta esto según el tiempo de vida de tu JWT (ej: 300 segundos)
-                page.shared_preferences.set_async("jwt_access_token", auth_state["access_token"])
-                page.shared_preferences.set_async("jwt_refresh_token", auth_state["refresh_token"])
-
-                auth_state["expires_at"] = asyncio.get_event_loop().time() + 10 
-                go_to_main_app()
+            user = pagina.appbar.actions[2]
+            if user.visible:
+                user.visible = False
             else:
-                error_text.value = "Credenciales inválidas"
-                page.update()
-        except Exception as ex:
-            error_text.value = f"Error de conexión: {ex}"
-            page.update()
+                user.visible = True
+        except:
+            pass
 
-    login_view = ft.Column([
-        ft.Text("Iniciar Sesión", size=30),
-        email_field,
-        password_field,
-        ft.Button("Entrar", on_click=handle_login),
-        error_text
-    ], alignment=ft.MainAxisAlignment.CENTER)
+    def eliminarUser(evento):
+        pagina.appbar.actions.pop(2)
 
-    # --- 2. Cuadro Modal de Advertencia ---
-    
-    def renew_token(e):
-        try:
-            refresh_url = f"{API_AUTH}/token/refresh/"
-            payload = {"refresh": auth_state["refresh_token"]}
-            response = requests.post(refresh_url, json=payload)
+    def agregarUser(evento):
+        pagina.appbar.actions.append(f.Text("david"))
+        
+        
+        #print(f'pagina.appbar.actions[2].value = {pagina.appbar.actions[2].value}')# _i=16
 
-            if response.status_code == 200:
-                data = response.json()
-                auth_state["access_token"] = data["access"]
-                auth_state["expires_at"] = asyncio.get_event_loop().time() + 10
-                page.run_task(monitor_token_expiry)
-                page.pop_dialog()
-                page.update()
-            else:
-                # Si el refresh token también expiró, forzar cierre de sesión
-                page.pop_dialog()
-                go_to_login()
-        except Exception:
-            page.pop_dialog()
-            go_to_login()
-
-    warning_dialog = ft.AlertDialog(
-        title=ft.Text("Sesión a punto de expirar"),
-        content=ft.Text("Tu sesión caducará en 5 segundos. ¿Deseas prorrogarla por 10 seg más ?"),
-        actions=[
-            ft.Button("Renovar sesión", on_click=renew_token),
-        ],
+    boton1=BotonPersonalizado(
+        texto="click aquí",
+        icono=None,
+        funcionPasada=imprimirEnConsola
     )
 
-    # --- 3. Monitoreo Asíncrono del Token ---
+    boton2=BotonPersonalizado(
+        texto="toggleVisibleUser",
+        icono=None,
+        funcionPasada=toggleVisibleUser
+    )
+
+    boton3=BotonPersonalizado(
+        texto="eliminarUser",
+        icono=None,
+        funcionPasada = lambda xcosa: pagina.appbar.actions.pop(2) if (len(pagina.appbar.actions)  >= 3) else ""
+    )
+
+    boton4=BotonPersonalizado(
+        texto="agregarUser",
+        icono=None,
+        funcionPasada = lambda sky: pagina.appbar.actions.append(f.Text("david"))
+    )
     
-    async def monitor_token_expiry():  
-        warning_dialog_shown = False
-        while monitoreo_encendido:
-            await asyncio.sleep(1) # Revisa el estado cada 1 segundos
-            
-            if not auth_state["access_token"]:
-                break # Si el usuario cerró sesión, detener monitoreo
+    #Así implementamos una barra personalizada importada desde paquetes para asignarlos a los atributos de la página en este caso. Recuerde que esos controles personalizados no pueden ser controles básicos, sino personalizados en forma de una clase:
 
-            current_time = asyncio.get_event_loop().time()
-            time_left = auth_state["expires_at"] - current_time
-            
-            # Mostrar modal faltando 10 segundos (y si no está ya abierto)
-            if time_left <= 5 and not warning_dialog_shown:
-                page.show_dialog(warning_dialog)
-                page.update()
-                warning_dialog_shown = True
-            
-            # Al expirar el tiempo, retornar al login
-            elif time_left <= 0:
-                break
-                
-        page.pop_dialog()
-        print(f"Ver monitoreo_encendido desde monitor_token_expiry <= 0: {monitoreo_encendido}")
-        go_to_login()
-    # Inicializar en pantalla de login
-    page.pop_dialog()
-    page.update() #
-    go_to_login()
-
-ft.run(main)
+    pagina.appbar = BarraAppBar("App de comer Mocos")
+    pagina.bottom_appbar = BarraBottomAppBar()
+    pagina.adaptive = True
+    pagina.add(boton1, boton2, boton3, boton4)
+    pagina.update()
+    
+f.run(principal)

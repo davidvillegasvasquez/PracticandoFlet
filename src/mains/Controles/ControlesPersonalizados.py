@@ -1,4 +1,4 @@
-#ControlesPersonalizados1.py
+#ControlesPersonalizados.py
 import flet as f
 from paquetes.controles.barras.barras import BarraAppBar, BarraBottomAppBar
 
