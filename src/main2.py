@@ -1,8 +1,7 @@
-#autenStateless3.py
+#autenStateless2.py
 import asyncio
 import flet as ft
-#import httpx
-import requests
+import httpx
 from paquetes.aplicaciones.clasesFlet import DropdownAutorYsusLibros, widget_ejemplo
 
 API_AUTH = "http://localhost:8000/apiauth/auth"
@@ -28,11 +27,11 @@ async def main(page: ft.Page):
         page.add(login_view)
 
     def go_to_main_app():
-        page.clean()
+        #page.clean()
         #pagina = DropdownAutorYsusLibros(page, auth_state["access_token"])
         #cuadtex = widget_ejemplo(page)
         page.add(
-            DropdownAutorYsusLibros(auth_state["access_token"]),
+            DropdownAutorYsusLibros(),
             ft.Button("Cerrar Sesión", on_click=lambda e:go_to_login()),
         )
         # Iniciar la tarea en segundo plano para el monitoreo del token
@@ -46,27 +45,27 @@ async def main(page: ft.Page):
     password_field = ft.TextField(label="Contraseña")
     error_text = ft.Text(color=ft.Colors.RED)
 
-    def handle_login(e):
+    async def handle_login(e):
         # 1. Enviar datos a tu backend con SimpleJWT
-        login_url = f"{API_AUTH}/login/" # Cambia esto por tu URL
-        payload = {
-            "username": username_field.value,
-            "password": password_field.value
-        }
-
         try:
-            response = requests.post(login_url, json=payload)
+            # Consumo de tu endpoint de DRF
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    f"{API_AUTH}/login/",
+                    json={"email": email_field.value, "password": password_field.value}
+                )
             
             if response.status_code == 200:
                 data = response.json()
                 auth_state["access_token"] = data["access"]
                 auth_state["refresh_token"] = data["refresh"]
                 # Ajusta esto según el tiempo de vida de tu JWT (ej: 300 segundos)
-                page.shared_preferences.set_async("jwt_access_token", auth_state["access_token"])
-                page.shared_preferences.set_async("jwt_refresh_token", auth_state["refresh_token"])
+                #page.shared_preferences.set_async("jwt_access_token", auth_state["access_token"])
+                #page.shared_preferences.set_async("jwt_refresh_token", auth_state["refresh_token"])
 
                 auth_state["expires_at"] = asyncio.get_event_loop().time() + 10 
                 go_to_main_app()
+                page.update()
             else:
                 error_text.value = "Credenciales inválidas"
                 page.update()
@@ -84,11 +83,14 @@ async def main(page: ft.Page):
 
     # --- 2. Cuadro Modal de Advertencia ---
     
-    def renew_token(e):
+    async def renew_token(e):
         try:
-            refresh_url = f"{API_AUTH}/token/refresh/"
-            payload = {"refresh": auth_state["refresh_token"]}
-            response = requests.post(refresh_url, json=payload)
+            # Consumo de tu endpoint de DRF
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    f"{API_AUTH}/token/refresh/",
+                    json={"refresh": auth_state["refresh_token"]}
+            )
 
             if response.status_code == 200:
                 data = response.json()

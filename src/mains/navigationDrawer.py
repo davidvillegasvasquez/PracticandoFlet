@@ -1,24 +1,24 @@
-#navegPage.py
+#navigationDrawer.py
+
 import asyncio
 
 import flet as ft
 
+def main(pagina: ft.Page):
+    pagina.title = "Drawer navigation"
 
-def main(page: ft.Page):
-    page.title = "Drawer navigation"
-
-    async def handle_change(e):
+    async def manejar_cambio(e):
         if e.control.selected_index == 0:
-            await page.push_route("/")
+            await pagina.push_route("/")
         elif e.control.selected_index == 1:
-            await page.push_route("/store")
+            await pagina.push_route("/store")
         elif e.control.selected_index == 2:
-            await page.push_route("/about")
+            await pagina.push_route("/about")
 
-    def create_drawer(selected_index=0):
+    def crear_cajonNav(indice_seleccionado=0):
         return ft.NavigationDrawer(
-            selected_index=selected_index,
-            on_change=handle_change,
+            selected_index=indice_seleccionado,
+            on_change=manejar_cambio,
             controls=[
                 ft.Container(height=12),
                 ft.NavigationDrawerDestination(
@@ -40,12 +40,12 @@ def main(page: ft.Page):
             ],
         )
 
-    async def show_drawer():
-        await page.show_drawer()
+    async def mostrar_cajonNav():
+        await pagina.show_drawer()
 
-    def route_change(route):
-        page.views.clear()
-        page.views.append(
+    def cambio_ruta(route):
+        pagina.views.clear()
+        pagina.views.append(
             ft.View(
                 route="/",
                 controls=[
@@ -56,7 +56,7 @@ def main(page: ft.Page):
                                     title=ft.Text("Home", expand=True),
                                     bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
                                     leading=ft.IconButton(
-                                        ft.Icons.MENU, on_click=show_drawer
+                                        ft.Icons.MENU, on_click=mostrar_cajonNav
                                     ),
                                 ),
                                 ft.Text("Welcome to Home Page"),
@@ -64,12 +64,12 @@ def main(page: ft.Page):
                         )
                     )
                 ],
-                drawer=create_drawer(selected_index=0) if page.route == "/" else None,
+                drawer=crear_cajonNav(indice_seleccionado=0) if pagina.route == "/" else None,
             )
         )
 
-        if page.route == "/store":
-            page.views.append(
+        if pagina.route == "/store":
+            pagina.views.append(
                 ft.View(
                     route="/store",
                     controls=[
@@ -80,7 +80,7 @@ def main(page: ft.Page):
                                         title=ft.Text("Store", expand=True),
                                         bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
                                         leading=ft.IconButton(
-                                            ft.Icons.MENU, on_click=show_drawer
+                                            ft.Icons.MENU, on_click=mostrar_cajonNav
                                         ),
                                         automatically_imply_leading=False,
                                     ),
@@ -88,19 +88,19 @@ def main(page: ft.Page):
                                     ft.Button(
                                         "Go About",
                                         on_click=lambda _: asyncio.create_task(
-                                            page.push_route("/about")
+                                            pagina.push_route("/about")
                                         ),
                                     ),
                                 ]
                             )
                         )
                     ],
-                    drawer=create_drawer(selected_index=1),
+                    drawer=crear_cajonNav(indice_seleccionado=1),
                 )
             )
 
-        if page.route == "/about":
-            page.views.append(
+        if pagina.route == "/about":
+            pagina.views.append(
                 ft.View(
                     route="/about",
                     controls=[
@@ -111,7 +111,7 @@ def main(page: ft.Page):
                                         title=ft.Text("About", expand=True),
                                         bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
                                         leading=ft.IconButton(
-                                            ft.Icons.MENU, on_click=show_drawer
+                                            ft.Icons.MENU, on_click=mostrar_cajonNav
                                         ),
                                         automatically_imply_leading=False,
                                     ),
@@ -119,26 +119,27 @@ def main(page: ft.Page):
                                     ft.Button(
                                         "Go Store",
                                         on_click=lambda _: asyncio.create_task(
-                                            page.push_route("/store")
+                                            pagina.push_route("/store")
                                         ),
                                     ),
                                 ]
                             )
                         )
                     ],
-                    drawer=create_drawer(selected_index=2),
+                    drawer=crear_cajonNav(indice_seleccionado=2),
                 )
             )
-        page.update()
+        pagina.update()
 
-    async def view_pop(view):
-        page.views.pop()
-        top_view = page.views[-1]
-        await page.push_route(top_view.route)
+    async def vista_pop(view):
+        pagina.views.pop()
+        top_view = pagina.views[-1]
+        await pagina.push_route(top_view.route)
 
-    page.on_route_change = route_change
-    page.on_view_pop = view_pop
-    route_change(page.route)
+    pagina.on_route_change = cambio_ruta
+    pagina.on_view_pop = vista_pop
+    cambio_ruta(pagina.route)
+
 
 if __name__ == "__main__":
     ft.run(main)

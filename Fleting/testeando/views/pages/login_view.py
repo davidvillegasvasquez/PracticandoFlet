@@ -25,6 +25,7 @@ class LoginView:
             ],
             spacing=10,
         )
+        print(f'self.page.multi_views = {self.page.multi_views}')
 
         return MainLayout(
             page=self.page,

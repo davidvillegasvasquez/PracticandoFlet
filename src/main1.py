@@ -115,7 +115,7 @@ async def main(page: ft.Page):
 
     # --- 3. Monitoreo Asíncrono del Token ---
     
-    async def monitor_token_expiry():  
+    def monitor_token_expiry():  
         warning_dialog_shown = False
         while monitoreo_encendido:
             await asyncio.sleep(1) # Revisa el estado cada 1 segundos

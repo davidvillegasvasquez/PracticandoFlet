@@ -6,7 +6,8 @@ from paquetes.controles.tablas.datatables import DataTable1
 URL_APITOKEN = "http://127.0.0.1:8000/apitoken/token/"
 BASE_URL_CATALOGO= "http://127.0.0.1:8000/catalogo"
 
-class DropdownAutorYsusLibros(ft.Control): 
+@ft.control
+class DropdownAutorYsusLibros(ft.Column): 
     def __init__(self, **kwargs):
         super().__init__(**kwargs) 
         self.listaFiltrada = []
@@ -16,7 +17,7 @@ class DropdownAutorYsusLibros(ft.Control):
         self.cabezera = {"Authorization": f"Bearer {tokenAcceso}"}
         #self.respuestaGet = requests.get(f"{BASE_URL_CATALOGO}/apirest/autores/", headers=self.cabezera) #respuestaGet es un objeto Response.
        
-    def build(self):
+    def init(self):
         btn_cargar = ft.Button(
             "Cargar Datos", 
             on_click=self.botonActualizar,
@@ -48,7 +49,7 @@ class DropdownAutorYsusLibros(ft.Control):
         self.controls[
             btn_cargar, 
             ft.Row(controls=[self.menuAutores, self.menuLibrosDelAutor]), 
-            ft.Button("Borrar", on_click=botonBorrarClickeado),
+            ft.Button("Borrar", on_click=self.botonBorrarClickeado),
             self.tablaLibrosDelAutorSelec,
             self.tablaLibrosDelAutorSelec_2,
             ] 

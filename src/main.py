@@ -1,68 +1,162 @@
-#ControlesPersonalizados.py
-import flet as f
-from paquetes.controles.barras.barras import BarraAppBar, BarraBottomAppBar
-from paquetes.controles.botones.botones import BotonPersonalizado
+#navigationDrawerLogin.py
 
-def principal(pagina: f.Page):
-    pagina.tittle="Atributos de Page"
+import asyncio
+import flet as ft
+from paquetes.controles.formularios.formularios import Formulario_login
 
-    def imprimirEnConsola(evento):
-        print(f'pagina.client_ip = {pagina.client_ip}')
-        print(f'pagina.client_user_agent = {pagina.client_user_agent}')
-        print(f'pagina.platform = {pagina.platform}')
-        print(f'pagina.platform_brightness = {pagina.platform_brightness}')
-        print(f'pagina.route = {pagina.route}')
-        print('================================')
+API_URL = "http://localhost:8000/apiauth/auth"
 
-    def toggleVisibleUser(evento):
-        try:
-            user = pagina.appbar.actions[2]
-            if user.visible:
-                user.visible = False
-            else:
-                user.visible = True
-        except:
-            pass
+# Estado global del cliente (mejor mantenido en una clase o variable global)
+auth_state = {
+    "access_token": None,
+    "refresh_token": None,
+    "expires_at": 0, # Timestamp de expiración
+}
 
-    def eliminarUser(evento):
-        pagina.appbar.actions.pop(2)
 
-    def agregarUser(evento):
-        pagina.appbar.actions.append(f.Text("david"))
-        
-        
-        #print(f'pagina.appbar.actions[2].value = {pagina.appbar.actions[2].value}')# _i=16
+def main(pagina: ft.Page):
+    pagina.title = "Cajón de navegación"
 
-    boton1=BotonPersonalizado(
-        texto="click aquí",
-        icono=None,
-        funcionPasada=imprimirEnConsola
-    )
+    async def manejar_cambio(e):
+        if e.control.selected_index == 0:
+            await pagina.push_route("/")
+        elif e.control.selected_index == 1:
+            await pagina.push_route("/store")
+        elif e.control.selected_index == 2:
+            await pagina.push_route("/about")
 
-    boton2=BotonPersonalizado(
-        texto="toggleVisibleUser",
-        icono=None,
-        funcionPasada=toggleVisibleUser
-    )
+    def crear_cajonNav(indice_seleccionado=0):
+        return ft.NavigationDrawer(
+            selected_index=indice_seleccionado,
+            on_change=manejar_cambio,
+            controls=[
+                ft.Container(height=12),
+                ft.NavigationDrawerDestination(
+                    label="Ingresar",
+                    icon=ft.Icons.HOME_OUTLINED,
+                    selected_icon=ft.Icon(ft.Icons.HOME),
+                    disabled=True if auth_state["access_token"] is not None else False
+                ),
+                ft.Divider(thickness=2),
+                ft.NavigationDrawerDestination(
+                    label="Store",
+                    icon=ft.Icon(ft.Icons.STORE_OUTLINED),
+                    selected_icon=ft.Icon(ft.Icons.STORE),
+                    disabled=True if auth_state["access_token"] is None else False
+                ),
+                ft.NavigationDrawerDestination(
+                    label="About",
+                    icon=ft.Icon(ft.Icons.PHONE_OUTLINED),
+                    selected_icon=ft.Icons.PHONE,
+                    disabled=True if auth_state["access_token"] is None else False
+                ),
+            ],
+        )
 
-    boton3=BotonPersonalizado(
-        texto="eliminarUser",
-        icono=None,
-        funcionPasada = lambda xcosa: pagina.appbar.actions.pop(2) if (len(pagina.appbar.actions)  >= 3) else ""
-    )
+    async def mostrar_cajonNav():
+        await pagina.show_drawer()
 
-    boton4=BotonPersonalizado(
-        texto="agregarUser",
-        icono=None,
-        funcionPasada = lambda sky: pagina.appbar.actions.append(f.Text("david"))
-    )
-    
-    #Así implementamos una barra personalizada importada desde paquetes para asignarlos a los atributos de la página en este caso. Recuerde que esos controles personalizados no pueden ser controles básicos, sino personalizados en forma de una clase:
+    def cambio_ruta(route):
+        pagina.views.clear()
+        pagina.views.append(
+            ft.View(
+                route="/",
+                controls=[
+                    ft.SafeArea(
+                        content=ft.Column(
+                            controls=[
+                                ft.AppBar(
+                                    title=ft.Text("Abrir sesión", expand=True),
+                                    bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
+                                    leading=ft.IconButton(
+                                        ft.Icons.MENU,
+                                        #disabled=True if auth_state["access_token"] is None else False,
+                                        visible=False,
+                                        on_click=mostrar_cajonNav
+                                    ),
+                                ),
+                                #ft.Text("Welcome to Home Page"),
+                                Formulario_login(),  
+                            ]
+                        )
+                    )
+                ],
+                drawer=crear_cajonNav(indice_seleccionado=0) if pagina.route == "/" else None,
+            )
+        )
 
-    pagina.appbar = BarraAppBar("App de comer Mocos")
-    pagina.bottom_appbar = BarraBottomAppBar()
-    pagina.adaptive = True
-    pagina.add(boton1, boton2, boton3, boton4)
-    pagina.update()
-    
-f.run(principal)
+        if pagina.route == "/store":
+            pagina.views.append(
+                ft.View(
+                    route="/store",
+                    controls=[
+                        ft.SafeArea(
+                            content=ft.Column(
+                                controls=[
+                                    ft.AppBar(
+                                        title=ft.Text("Store", expand=True),
+                                        bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
+                                        leading=ft.IconButton(
+                                            ft.Icons.MENU, on_click=mostrar_cajonNav
+                                        ),
+                                        automatically_imply_leading=False,
+                                    ),
+                                    ft.Text("Welcome to Store Page"),
+                                    ft.Button(
+                                        "Go About",
+                                        on_click=lambda _: asyncio.create_task(
+                                            pagina.push_route("/about")
+                                        ),
+                                    ),
+                                ]
+                            )
+                        )
+                    ],
+                    drawer=crear_cajonNav(indice_seleccionado=1),
+                )
+            )
+
+        if pagina.route == "/about":
+            pagina.views.append(
+                ft.View(
+                    route="/about",
+                    controls=[
+                        ft.SafeArea(
+                            content=ft.Column(
+                                controls=[
+                                    ft.AppBar(
+                                        title=ft.Text("About", expand=True),
+                                        bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
+                                        leading=ft.IconButton(
+                                            ft.Icons.MENU, on_click=mostrar_cajonNav
+                                        ),
+                                        automatically_imply_leading=False,
+                                    ),
+                                    ft.Text("Welcome to About Page"),
+                                    ft.Button(
+                                        "Go Store",
+                                        on_click=lambda _: asyncio.create_task(
+                                            pagina.push_route("/store")
+                                        ),
+                                    ),
+                                ]
+                            )
+                        )
+                    ],
+                    drawer=crear_cajonNav(indice_seleccionado=2),
+                )
+            )
+        pagina.update()
+
+    async def vista_pop(view):
+        pagina.views.pop()
+        top_view = pagina.views[-1]
+        await pagina.push_route(top_view.route)
+
+    pagina.on_route_change = cambio_ruta
+    pagina.on_view_pop = vista_pop
+    cambio_ruta(pagina.route)
+
+
+if __name__ == "__main__":
+    ft.run(main)
