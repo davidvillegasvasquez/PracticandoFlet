@@ -3,6 +3,9 @@
 import asyncio
 import flet as ft
 from paquetes.controles.formularios.formularios import Formulario_login
+from paquetes.aplicaciones.agenda_tareas import TodoApp
+from paquetes.aplicaciones.calculadora import AppCalculadora
+from paquetes.logicas.apis import SesionJWT
 
 API_URL = "http://localhost:8000/apiauth/auth"
 
@@ -10,9 +13,10 @@ API_URL = "http://localhost:8000/apiauth/auth"
 auth_state = {
     "access_token": None,
     "refresh_token": None,
-    "expires_at": 0, # Timestamp de expiración
+    #"expires_at": 0, # Timestamp de expiración
 }
 
+sesion = None
 
 def main(pagina: ft.Page):
     pagina.title = "Cajón de navegación"
@@ -21,34 +25,37 @@ def main(pagina: ft.Page):
         if e.control.selected_index == 0:
             await pagina.push_route("/")
         elif e.control.selected_index == 1:
-            await pagina.push_route("/store")
+            await pagina.push_route("/todo")
         elif e.control.selected_index == 2:
-            await pagina.push_route("/about")
+            await pagina.push_route("/calculadora")
 
     def crear_cajonNav(indice_seleccionado=0):
         return ft.NavigationDrawer(
             selected_index=indice_seleccionado,
             on_change=manejar_cambio,
+            #disabled = True,
+            #visible = True if auth_state["access_token"] is not None else False,
             controls=[
                 ft.Container(height=12),
                 ft.NavigationDrawerDestination(
                     label="Ingresar",
-                    icon=ft.Icons.HOME_OUTLINED,
+                    icon=ft.Icons.HOME_OUTLINED, 
+                    visible = True, #if auth_state["access_token"] is not None else False,
                     selected_icon=ft.Icon(ft.Icons.HOME),
-                    disabled=True if auth_state["access_token"] is not None else False
+                    #disabled=True if auth_state["access_token"] is not None else False
                 ),
                 ft.Divider(thickness=2),
                 ft.NavigationDrawerDestination(
-                    label="Store",
+                    label="To-do",
                     icon=ft.Icon(ft.Icons.STORE_OUTLINED),
                     selected_icon=ft.Icon(ft.Icons.STORE),
-                    disabled=True if auth_state["access_token"] is None else False
+                    #disabled=True if auth_state["access_token"] is None else False
                 ),
                 ft.NavigationDrawerDestination(
-                    label="About",
+                    label="Calculadora",
                     icon=ft.Icon(ft.Icons.PHONE_OUTLINED),
                     selected_icon=ft.Icons.PHONE,
-                    disabled=True if auth_state["access_token"] is None else False
+                    #disabled=True if auth_state["access_token"] is None else False
                 ),
             ],
         )
@@ -56,8 +63,31 @@ def main(pagina: ft.Page):
     async def mostrar_cajonNav():
         await pagina.show_drawer()
 
+    async def logeo(e):
+        sesion = SesionJWT(email.value, password.value, pagina)
+        await sesion.handle_login()
+        #print("aprete logeo")
+        #Limpiamos de posibles errores anteriores:
+        error_text.value = sesion.error_text
+        #error_text.value = f"Error de conexión:"
+        #return "" #sesion
+
+    def logout(e):
+        auth_state["access_token"]=None
+        auth_state["refresh_token"]=None
+        return auth_state
+    
+    #Definimos los controles que se usaran a nivel del main para poder funcionar:
+    error_text = ft.Text(color=ft.Colors.RED)
+    email = ft.TextField(label="Email")
+    password = ft.TextField(label="Contraseña")
+
     def cambio_ruta(route):
         pagina.views.clear()
+        #Controles para la primera página (autenticación):
+        #formulario = Formulario_login()
+        botonEnviar = ft.Button("Entrar", on_click=logeo)
+        
         pagina.views.append(
             ft.View(
                 route="/",
@@ -71,12 +101,13 @@ def main(pagina: ft.Page):
                                     leading=ft.IconButton(
                                         ft.Icons.MENU,
                                         #disabled=True if auth_state["access_token"] is None else False,
-                                        visible=False,
                                         on_click=mostrar_cajonNav
                                     ),
                                 ),
-                                #ft.Text("Welcome to Home Page"),
-                                Formulario_login(),  
+                                email,
+                                password,
+                                botonEnviar,
+                                error_text,   
                             ]
                         )
                     )
@@ -85,27 +116,33 @@ def main(pagina: ft.Page):
             )
         )
 
-        if pagina.route == "/store":
+        if pagina.route == "/todo":
             pagina.views.append(
                 ft.View(
-                    route="/store",
+                    route="/todo",
                     controls=[
                         ft.SafeArea(
                             content=ft.Column(
                                 controls=[
                                     ft.AppBar(
-                                        title=ft.Text("Store", expand=True),
+                                        title=ft.Text("To-Do", expand=True),
                                         bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
                                         leading=ft.IconButton(
                                             ft.Icons.MENU, on_click=mostrar_cajonNav
                                         ),
                                         automatically_imply_leading=False,
+                                        actions=[
+                                            ft.Text(
+                                                f'usuario:{"david"}',
+                                                visible=True if auth_state["access_token"] is None else False
+                                            )
+                                        ]
                                     ),
-                                    ft.Text("Welcome to Store Page"),
+                                    TodoApp(),
                                     ft.Button(
-                                        "Go About",
+                                        "Ir a calculadora",
                                         on_click=lambda _: asyncio.create_task(
-                                            pagina.push_route("/about")
+                                            pagina.push_route("/calculadora")
                                         ),
                                     ),
                                 ]
@@ -116,27 +153,27 @@ def main(pagina: ft.Page):
                 )
             )
 
-        if pagina.route == "/about":
+        if pagina.route == "/calculadora":
             pagina.views.append(
                 ft.View(
-                    route="/about",
+                    route="/calculadora",
                     controls=[
                         ft.SafeArea(
                             content=ft.Column(
                                 controls=[
                                     ft.AppBar(
-                                        title=ft.Text("About", expand=True),
+                                        title=ft.Text("Calculadora", expand=True),
                                         bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
                                         leading=ft.IconButton(
                                             ft.Icons.MENU, on_click=mostrar_cajonNav
                                         ),
                                         automatically_imply_leading=False,
                                     ),
-                                    ft.Text("Welcome to About Page"),
+                                    AppCalculadora(),
                                     ft.Button(
-                                        "Go Store",
+                                        "Ir a To-Do",
                                         on_click=lambda _: asyncio.create_task(
-                                            pagina.push_route("/store")
+                                            pagina.push_route("/todo")
                                         ),
                                     ),
                                 ]

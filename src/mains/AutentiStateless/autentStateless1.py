@@ -29,7 +29,7 @@ async def main(page: ft.Page):
         page.clean()
         page.add(
             ft.Text("Bienvenido a la App Principal", size=24),
-            ft.Button("Cerrar Sesión", on_click=lambda e:go_to_login())
+            ft.Button("Cerrar Sesión", on_click=lambda e: go_to_login())
         )
         # Iniciar la tarea en segundo plano para el monitoreo del token
         nonlocal monitoreo_encendido
@@ -133,6 +133,7 @@ async def main(page: ft.Page):
         page.pop_dialog()
         print(f"Ver monitoreo_encendido desde monitor_token_expiry <= 0: {monitoreo_encendido}")
         go_to_login()
+
     # Inicializar en pantalla de login
     page.pop_dialog()
     page.update() #
