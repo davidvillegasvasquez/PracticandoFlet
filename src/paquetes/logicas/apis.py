@@ -42,12 +42,12 @@ class SesionJWT():
                 self.monitoreo_encendido = True
                 # Ajusta esto según el tiempo de vida de tu JWT (ej: 300 segundos)
                 self.expira_a = asyncio.get_event_loop().time() + 10 
-                self.pagina.push_route("/todo")
+                await self.pagina.push_route("/todo")
             else:
-                self.error_text = "Credenciales inválidas"
+                self.error_text = "Credenciales inválidas. Vuelva intentar."
                 self.pagina.update()
         except Exception as ex:
-            self.error_text = f"Error de conexión: {ex}"
+            self.error_text = f"Error de conexión: {ex}. Intente de nuevo."
             self.pagina.update()
 
     # --- 2. Cuadro Modal de Advertencia ---

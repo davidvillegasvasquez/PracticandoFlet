@@ -2,19 +2,10 @@
 
 import asyncio
 import flet as ft
-from paquetes.controles.formularios.formularios import Formulario_login
+#from paquetes.controles.formularios.formularios import Formulario_login
 from paquetes.aplicaciones.agenda_tareas import TodoApp
 from paquetes.aplicaciones.calculadora import AppCalculadora
 from paquetes.logicas.apis import SesionJWT
-
-API_URL = "http://localhost:8000/apiauth/auth"
-
-# Estado global del cliente (mejor mantenido en una clase o variable global)
-auth_state = {
-    "access_token": None,
-    "refresh_token": None,
-    #"expires_at": 0, # Timestamp de expiración
-}
 
 sesion = None
 
@@ -64,30 +55,23 @@ def main(pagina: ft.Page):
         await pagina.show_drawer()
 
     async def logeo(e):
+        error_text.value =""
         sesion = SesionJWT(email.value, password.value, pagina)
         await sesion.handle_login()
-        #print("aprete logeo")
-        #Limpiamos de posibles errores anteriores:
         error_text.value = sesion.error_text
-        #error_text.value = f"Error de conexión:"
-        #return "" #sesion
+        pagina.update()
 
     def logout(e):
-        auth_state["access_token"]=None
-        auth_state["refresh_token"]=None
-        return auth_state
+        pass
     
     #Definimos los controles que se usaran a nivel del main para poder funcionar:
     error_text = ft.Text(color=ft.Colors.RED)
     email = ft.TextField(label="Email")
     password = ft.TextField(label="Contraseña")
+    botonEnviar = ft.Button("Entrar", on_click=logeo)
 
     def cambio_ruta(route):
         pagina.views.clear()
-        #Controles para la primera página (autenticación):
-        #formulario = Formulario_login()
-        botonEnviar = ft.Button("Entrar", on_click=logeo)
-        
         pagina.views.append(
             ft.View(
                 route="/",
@@ -134,7 +118,7 @@ def main(pagina: ft.Page):
                                         actions=[
                                             ft.Text(
                                                 f'usuario:{"david"}',
-                                                visible=True if auth_state["access_token"] is None else False
+                                                visible=True if sesion is None else False
                                             )
                                         ]
                                     ),
