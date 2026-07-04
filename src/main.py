@@ -59,6 +59,8 @@ def main(pagina: ft.Page):
         sesion = SesionJWT(email.value, password.value, pagina)
         await sesion.handle_login()
         error_text.value = sesion.error_text
+        email.value = ""
+        password.value = ""
         pagina.update()
 
     def logout(e):

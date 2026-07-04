@@ -40,7 +40,8 @@ class SesionJWT():
                 self.tokenAcceso = data["access"]
                 self.tokenRefres = data["refresh"]
                 self.monitoreo_encendido = True
-                # Ajusta esto según el tiempo de vida de tu JWT (ej: 300 segundos)
+                self.pagina.run_task(self.monitor_token_expiry)
+                # Ajusta esto según el tiempo de vida de tu JWT (ej: 300 segundos)       
                 self.expira_a = asyncio.get_event_loop().time() + 10 
                 await self.pagina.push_route("/todo")
             else:
@@ -71,14 +72,14 @@ class SesionJWT():
                 self.pagina.pop_dialog()
                 self.pagina.push_route("/")
         except Exception:
-            self.pagina.pop_dialog()
+            self.pagina.pop_dialog() #Probar eliminar esta línea para el error:interface_endpoint_client.cc(695)] Message 0 rejected by interface blink.mojom.WidgetHost
             self.pagina.push_route("/")
 
     # --- 3. Monitoreo Asíncrono del Token ---
     
     async def monitor_token_expiry(self):  
         warning_dialog_shown = False
-        while self.monitoreo_encendido:
+        while True: #self.monitoreo_encendido:
             await asyncio.sleep(1) # Revisa el estado cada 1 segundos
             
             if not self.tokenAcceso:
@@ -99,4 +100,4 @@ class SesionJWT():
                 
         self.pagina.pop_dialog()
         self.pagina.update()
-        self.pagina.push_route("/")
+        await self.pagina.push_route("/")
