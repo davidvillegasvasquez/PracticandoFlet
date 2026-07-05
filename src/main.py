@@ -6,6 +6,7 @@ import flet as ft
 from paquetes.aplicaciones.agenda_tareas import TodoApp
 from paquetes.aplicaciones.calculadora import AppCalculadora
 from paquetes.logicas.apis import SesionJWT
+from paquetes.aplicaciones.moduloAutorYsusLibros import AutorYsusLibros
 
 sesion = None
 
@@ -170,7 +171,7 @@ def main(pagina: ft.Page):
                                             )
                                         ]
                                     ),
-                                    ft.Text("Autor y sus libros dropdown."),
+                                    AutorYsusLibros(pagina, sesion),
                                     ft.Button(
                                         "Ir a calculadora",
                                         on_click=lambda _: asyncio.create_task(
