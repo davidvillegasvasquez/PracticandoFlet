@@ -72,7 +72,7 @@ class SesionJWT():
                 self.pagina.pop_dialog()
                 self.pagina.push_route("/")
         except Exception:
-            self.pagina.pop_dialog() #Probar eliminar esta línea para el error:interface_endpoint_client.cc(695)] Message 0 rejected by interface blink.mojom.WidgetHost
+            #self.pagina.pop_dialog() #Probar eliminar esta línea para el error:interface_endpoint_client.cc(695)] Message 0 rejected by interface blink.mojom.WidgetHost
             self.pagina.push_route("/")
 
     # --- 3. Monitoreo Asíncrono del Token ---
@@ -96,8 +96,10 @@ class SesionJWT():
             
             # Al expirar el tiempo, retornar al login
             elif time_left <= 0:
+                self.tokenAcceso = None
+                self.tokenRefres = None
                 break
-                
-        self.pagina.pop_dialog()
+
+        #self.pagina.pop_dialog()
         self.pagina.update()
         await self.pagina.push_route("/")

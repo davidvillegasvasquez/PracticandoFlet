@@ -18,14 +18,14 @@ def main(pagina: ft.Page):
         elif e.control.selected_index == 1:
             await pagina.push_route("/todo")
         elif e.control.selected_index == 2:
+            await pagina.push_route("/autorysuslibros")
+        elif e.control.selected_index == 3:
             await pagina.push_route("/calculadora")
 
     def crear_cajonNav(indice_seleccionado=0):
         return ft.NavigationDrawer(
             selected_index=indice_seleccionado,
             on_change=manejar_cambio,
-            #disabled = True,
-            #visible = True if auth_state["access_token"] is not None else False,
             controls=[
                 ft.Container(height=12),
                 ft.NavigationDrawerDestination(
@@ -33,20 +33,28 @@ def main(pagina: ft.Page):
                     icon=ft.Icons.HOME_OUTLINED, 
                     visible = True, #if auth_state["access_token"] is not None else False,
                     selected_icon=ft.Icon(ft.Icons.HOME),
-                    #disabled=True if auth_state["access_token"] is not None else False
+                    disabled=False if (sesion is None or sesion.tokenAcceso is None) else True
                 ),
                 ft.Divider(thickness=2),
                 ft.NavigationDrawerDestination(
                     label="To-do",
                     icon=ft.Icon(ft.Icons.STORE_OUTLINED),
                     selected_icon=ft.Icon(ft.Icons.STORE),
-                    #disabled=True if auth_state["access_token"] is None else False
+                    disabled=True if sesion is None else False
                 ),
+                ft.Divider(thickness=2),
+                ft.NavigationDrawerDestination(
+                    label="Autor y sus libros",
+                    icon=ft.Icon(ft.Icons.STORE_OUTLINED),
+                    selected_icon=ft.Icon(ft.Icons.STORE),
+                    disabled=True if sesion is None else False
+                ),
+                ft.Divider(thickness=2),
                 ft.NavigationDrawerDestination(
                     label="Calculadora",
                     icon=ft.Icon(ft.Icons.PHONE_OUTLINED),
                     selected_icon=ft.Icons.PHONE,
-                    #disabled=True if auth_state["access_token"] is None else False
+                    disabled=True if (sesion is None or sesion.tokenAcceso is None) else False
                 ),
             ],
         )
@@ -55,6 +63,7 @@ def main(pagina: ft.Page):
         await pagina.show_drawer()
 
     async def logeo(e):
+        global sesion
         error_text.value =""
         sesion = SesionJWT(email.value, password.value, pagina)
         await sesion.handle_login()
@@ -119,12 +128,49 @@ def main(pagina: ft.Page):
                                         automatically_imply_leading=False,
                                         actions=[
                                             ft.Text(
-                                                f'usuario:{"david"}',
-                                                visible=True if sesion is None else False
+                                                f'usuario:{sesion.usuario}',
+                                                visible=True if sesion.tokenAcceso is not None else False
                                             )
                                         ]
                                     ),
                                     TodoApp(),
+                                    ft.Button(
+                                        "Ir a autor y sus libros",
+                                        on_click=lambda _: asyncio.create_task(
+                                            pagina.push_route("/autorysuslibros")
+                                        ),
+                                    ),
+                                ]
+                            )
+                        )
+                    ],
+                    drawer=crear_cajonNav(indice_seleccionado=1),
+                )
+            )
+
+        if pagina.route == "/autorysuslibros":
+            pagina.views.append(
+                ft.View(
+                    route="/autorysuslibros",
+                    controls=[
+                        ft.SafeArea(
+                            content=ft.Column(
+                                controls=[
+                                    ft.AppBar(
+                                        title=ft.Text("Autor y sus libros", expand=True),
+                                        bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
+                                        leading=ft.IconButton(
+                                            ft.Icons.MENU, on_click=mostrar_cajonNav
+                                        ),
+                                        automatically_imply_leading=False,
+                                        actions=[
+                                            ft.Text(
+                                                f'usuario:{sesion.usuario}',
+                                                visible=True if sesion.tokenAcceso is not None else False
+                                            )
+                                        ]
+                                    ),
+                                    ft.Text("Autor y sus libros dropdown."),
                                     ft.Button(
                                         "Ir a calculadora",
                                         on_click=lambda _: asyncio.create_task(
@@ -135,7 +181,7 @@ def main(pagina: ft.Page):
                             )
                         )
                     ],
-                    drawer=crear_cajonNav(indice_seleccionado=1),
+                    drawer=crear_cajonNav(indice_seleccionado=2),
                 )
             )
 
@@ -154,19 +200,25 @@ def main(pagina: ft.Page):
                                             ft.Icons.MENU, on_click=mostrar_cajonNav
                                         ),
                                         automatically_imply_leading=False,
+                                        actions=[
+                                            ft.Text(
+                                                f'usuario:{sesion.usuario}',
+                                                visible=True if sesion.tokenAcceso is not None else False
+                                            )
+                                        ]
                                     ),
                                     AppCalculadora(),
                                     ft.Button(
-                                        "Ir a To-Do",
+                                        "Ir a autor y sus libros",
                                         on_click=lambda _: asyncio.create_task(
-                                            pagina.push_route("/todo")
+                                            pagina.push_route("/autorysuslibros")
                                         ),
                                     ),
                                 ]
                             )
                         )
                     ],
-                    drawer=crear_cajonNav(indice_seleccionado=2),
+                    drawer=crear_cajonNav(indice_seleccionado=3),
                 )
             )
         pagina.update()
