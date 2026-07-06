@@ -4,7 +4,7 @@ import flet as ft
 import httpx
 
 API_URL = "http://localhost:8000/apiauth/auth"
-
+max_cantidad_renov = 1 #Constantes de la máxima cantidad de renovaciones que se pueden hacer. Candidata para ser importada desde un fichero de constantes.
 class SesionJWT():
     """
     Lleva la administración de una sesión sin estado que consume una api de autenticación propia basada en simple jwt.
@@ -17,6 +17,7 @@ class SesionJWT():
         self.tokenRefres = None
         self.monitoreo_encendido = False
         self.error_text = None 
+        self.contadorDeRenov=0 #Contador de renovaciones aceptables.
         self.expira_a = 0
         self.warning_dialog = ft.AlertDialog(
             title=ft.Text("Sesión a punto de expirar"),
@@ -63,7 +64,7 @@ class SesionJWT():
             if response.status_code == 200:
                 data = response.json()
                 self.tokenAcceso = data["access"]
-                self.expira_a = asyncio.get_event_loop().time() + 60
+                self.expira_a = asyncio.get_event_loop().time() + 30
                 self.pagina.run_task(self.monitor_token_expiry)
                 self.pagina.pop_dialog()
                 self.pagina.update()
@@ -76,7 +77,7 @@ class SesionJWT():
 
     # --- 3. Monitoreo Asíncrono del Token ---
     
-    async def monitor_token_expiry(self):  
+    async def monitor_token_expiry(self): 
         warning_dialog_shown = False
         while True: #self.monitoreo_encendido:
             await asyncio.sleep(1) # Revisa el estado cada 1 segundos
@@ -89,9 +90,11 @@ class SesionJWT():
             
             # Mostrar modal faltando 10 segundos (y si no está ya abierto)
             if time_left <= 5 and not warning_dialog_shown:
-                self.pagina.show_dialog(self.warning_dialog)
-                self.pagina.update()
-                warning_dialog_shown = True
+                if self.contadorDeRenov <= max_cantidad_renov:
+                    self.contadorDeRenov+=1 
+                    self.pagina.show_dialog(self.warning_dialog)
+                    self.pagina.update()
+                    warning_dialog_shown = True
             
             # Al expirar el tiempo, retornar al login
             elif time_left <= 0:

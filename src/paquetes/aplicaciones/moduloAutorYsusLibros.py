@@ -3,8 +3,6 @@ import asyncio
 import httpx
 from paquetes.controles.tablas.datatables import DataTable1
 
-#Constantes:
-#cabezeras = {"Authorization": f"Bearer {self.sesion.tokenAcceso}"}
 url_api = "http://127.0.0.1:8000/catalogo/apirest/autores/"
 
 class AutorYsusLibros(ft.Column):
@@ -14,7 +12,6 @@ class AutorYsusLibros(ft.Column):
         self.sesion = sesion
         self.listaFiltrada = []
         self.listaTodosLosTitulosYsusCampos = []
-        #self.cabezeras = {"Authorization": f"Bearer {self.sesion.tokenAcceso}"}
     
     def build(self):
         self.menuAutores = ft.Dropdown(
@@ -36,7 +33,7 @@ class AutorYsusLibros(ft.Column):
         self.tablaLibrosDelAutorSelec = DataTable1()
         self.tablaLibrosDelAutorSelec_2 = DataTable1()
 
-        self.btn_cargar = ft.Button("Cargar Datos", on_click=self.botonConectarClickeado)
+        self.btn_cargar = ft.Button("Cargar Datos", on_click=self.botonConsumirEndPoint)
 
         #Finalmente agregamos los controles a la columma (recuerde que este objeto es una herencia de ft.Column):
         self.controls = [
@@ -47,7 +44,8 @@ class AutorYsusLibros(ft.Column):
             self.tablaLibrosDelAutorSelec_2,
         ]
 
-    async def botonConectarClickeado(self, e):
+
+    async def botonConsumirEndPoint(self, e):
         try:
             async with httpx.AsyncClient(headers={"Authorization": f"Bearer {self.sesion.tokenAcceso}"}) as client:
                 respuesta = await client.get(url_api)     
@@ -97,37 +95,16 @@ class AutorYsusLibros(ft.Column):
         self.listaTodosLosTitulosYsusCampos = [] #Reseteamos para limpiar de la última selección de autor.
 
         for url in susLibros:
-            try:
-                #Anteriormente usábamos un self.cabezeras={"Authorization": f"Bearer {self.sesion.tokenAcceso}, que no permitia el refrescamiento del token
-#de autorización. Usando directamente el self.sesion, se actualiza, porque el valor no se queda queda estatico en el uso del self.cabezeras.
-                async with httpx.AsyncClient(headers={"Authorization": f"Bearer {self.sesion.tokenAcceso}"}) as client:
+            async with httpx.AsyncClient(headers={"Authorization": f"Bearer {self.sesion.tokenAcceso}"}) as client:
                     urlLibroRequest = await client.get(url)
-
-                    data = urlLibroRequest.json() #es el diccionario tal como se muestra en el cliente drf.
-                    titulo=data['titulo']
-                    listaDeTitulos.append(titulo)
-                    self.listaTodosLosTitulosYsusCampos.append(data)
-                  
-            except Exception:
-                self.pag.show_dialog(ft.AlertDialog(
-                    title=ft.Text("Ocurrió un error..."),
-                    content=ft.Text(f'Error: {str(urlLibroRequest.status_code)}'),
-                    actions=[ft.TextButton("Cerrar", on_click=lambda e: self.pag.pop_dialog())],
-                    modal=True
-                ))
-                break
-            """
+            if urlLibroRequest.status_code == 200:
+                data = urlLibroRequest.json() #es el diccionario tal como se muestra en el cliente drf.
+                titulo=data['titulo']
+                listaDeTitulos.append(titulo)
+                self.listaTodosLosTitulosYsusCampos.append(data)
             else:
-                pass
-                
-                self.botonBorrarClickeado(None)
-                self.pag.show_dialog(ft.AlertDialog(
-                title=ft.Text("Ocurrió un error..."),
-                content=ft.Text(f'No hubo conexión. Código: {urlLibroRequest.status_code}. Pulse el botón "cargar datos" para intentar nuevamente.'),
-                actions=[ft.TextButton("Cerrar", on_click=lambda e: self.pag.pop_dialog())],
-                modal=True
-                ))  
-            """     
+                break
+               
         #Por último rellenamos las opciones de menuLibrosDelAutor por comprensión de listas:
         dropdown_options_librosDelAutor = [
             ft.dropdown.Option(
@@ -156,9 +133,12 @@ class AutorYsusLibros(ft.Column):
 
         #El argumento que acepta el atributo método hacerRegistrosApartirDe() en nuestra clase personalizada, DataTable1(), son listas de diccionarios.
         #Así que tenemos que hacer una lista de un sólo elemento, cuyo elemento es el libro seleccionado en menuLibrosDelAutor, dictLibro:
-        lista = [dictDelLibroSelec,]
-        self.tablaLibrosDelAutorSelec_2.hacerRegistrosApartirDe(lista)
-
+        
+        if dictDelLibroSelec is not None:
+            lista = [dictDelLibroSelec,]
+            self.tablaLibrosDelAutorSelec_2.hacerRegistrosApartirDe(lista)
+        else:
+            pass  
 
     def botonBorrarClickeado(self, e):
         self.menuAutores.options = []
