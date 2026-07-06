@@ -42,7 +42,7 @@ class SesionJWT():
                 self.monitoreo_encendido = True
                 self.pagina.run_task(self.monitor_token_expiry)
                 # Ajusta esto según el tiempo de vida de tu JWT (ej: 300 segundos)       
-                self.expira_a = asyncio.get_event_loop().time() + 10 
+                self.expira_a = asyncio.get_event_loop().time() + 30 
                 await self.pagina.push_route("/todo")
             else:
                 self.error_text = "Credenciales inválidas. Vuelva intentar."
@@ -63,7 +63,7 @@ class SesionJWT():
             if response.status_code == 200:
                 data = response.json()
                 self.tokenAcceso = data["access"]
-                self.expira_a = asyncio.get_event_loop().time() + 10
+                self.expira_a = asyncio.get_event_loop().time() + 60
                 self.pagina.run_task(self.monitor_token_expiry)
                 self.pagina.pop_dialog()
                 self.pagina.update()
@@ -72,8 +72,7 @@ class SesionJWT():
                 self.pagina.pop_dialog()
                 self.pagina.push_route("/")
         except Exception:
-            #self.pagina.pop_dialog() #Probar eliminar esta línea para el error:interface_endpoint_client.cc(695)] Message 0 rejected by interface blink.mojom.WidgetHost
-            self.pagina.push_route("/")
+            await self.pagina.push_route("/")
 
     # --- 3. Monitoreo Asíncrono del Token ---
     
@@ -100,6 +99,5 @@ class SesionJWT():
                 self.tokenRefres = None
                 break
 
-        #self.pagina.pop_dialog()
         self.pagina.update()
         await self.pagina.push_route("/")

@@ -14,7 +14,6 @@ class AutorYsusLibros(ft.Column):
         self.sesion = sesion
         self.listaFiltrada = []
         self.listaTodosLosTitulosYsusCampos = []
-        #self.respuesta = None
         self.cabezeras = {"Authorization": f"Bearer {self.sesion.tokenAcceso}"}
     
     def build(self):
@@ -87,7 +86,7 @@ class AutorYsusLibros(ft.Column):
     async def actualizarMenuLibrosDelAutor(self, e):
         autor_seleccionado = int(e.control.value) #Tenemos que llevar a entero porque los control.value retornan cadenas, y el id en listaFiltrada está expresada como tipo entero.
         
-        # Extraemos el diccioanrio que expresa el registro del autor:
+        # Extraemos el diccionario que expresa el registro del autor:
         dictAutor = next((autor for autor in self.listaFiltrada if autor['id'] == autor_seleccionado), None)
 
         #Extraemos la lista de sus libros contenido en el campo 'libros' de dictAutor y que están en forma de hipervínculos:
