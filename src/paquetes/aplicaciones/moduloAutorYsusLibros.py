@@ -14,7 +14,7 @@ class AutorYsusLibros(ft.Column):
         self.sesion = sesion
         self.listaFiltrada = []
         self.listaTodosLosTitulosYsusCampos = []
-        self.cabezeras = {"Authorization": f"Bearer {self.sesion.tokenAcceso}"}
+        #self.cabezeras = {"Authorization": f"Bearer {self.sesion.tokenAcceso}"}
     
     def build(self):
         self.menuAutores = ft.Dropdown(
@@ -49,7 +49,7 @@ class AutorYsusLibros(ft.Column):
 
     async def botonConectarClickeado(self, e):
         try:
-            async with httpx.AsyncClient(headers=self.cabezeras) as client:
+            async with httpx.AsyncClient(headers={"Authorization": f"Bearer {self.sesion.tokenAcceso}"}) as client:
                 respuesta = await client.get(url_api)     
 
             diccionario = respuesta.json() #Analiza el cuerpo de la respuesta como JSON y devuelve un diccionario o lista de Python.
@@ -98,32 +98,36 @@ class AutorYsusLibros(ft.Column):
 
         for url in susLibros:
             try:
-                async with httpx.AsyncClient(headers=self.cabezeras) as client:
+                #Anteriormente usábamos un self.cabezeras={"Authorization": f"Bearer {self.sesion.tokenAcceso}, que no permitia el refrescamiento del token
+#de autorización. Usando directamente el self.sesion, se actualiza, porque el valor no se queda queda estatico en el uso del self.cabezeras.
+                async with httpx.AsyncClient(headers={"Authorization": f"Bearer {self.sesion.tokenAcceso}"}) as client:
                     urlLibroRequest = await client.get(url)
+
+                    data = urlLibroRequest.json() #es el diccionario tal como se muestra en el cliente drf.
+                    titulo=data['titulo']
+                    listaDeTitulos.append(titulo)
+                    self.listaTodosLosTitulosYsusCampos.append(data)
                   
             except Exception:
                 self.pag.show_dialog(ft.AlertDialog(
                     title=ft.Text("Ocurrió un error..."),
                     content=ft.Text(f'Error: {str(urlLibroRequest.status_code)}'),
-                    actions=[ft.TextButton("Cerrar", on_click=lambda e: pagina.pop_dialog())],
-                    modal=True
-                ))
-
-            else:
-                if urlLibroRequest: #status_code == 200:
-                    data = urlLibroRequest.json() #es el diccionario tal como se muestra en el cliente drf.
-                    print(f'data={data}')
-                    titulo=data['titulo']
-                    listaDeTitulos.append(titulo)
-                    self.listaTodosLosTitulosYsusCampos.append(data)
-                else:
-                    self.botonBorrarClickeado(None)
-                    self.pag.show_dialog(ft.AlertDialog(
-                    title=ft.Text("Ocurrió un error..."),
-                    content=ft.Text(f'No hubo conexión. Código: {urlLibroRequest.status_code}. Pulse el botón "cargar datos" para intentar nuevamente.'),
                     actions=[ft.TextButton("Cerrar", on_click=lambda e: self.pag.pop_dialog())],
                     modal=True
-                ))       
+                ))
+                break
+            """
+            else:
+                pass
+                
+                self.botonBorrarClickeado(None)
+                self.pag.show_dialog(ft.AlertDialog(
+                title=ft.Text("Ocurrió un error..."),
+                content=ft.Text(f'No hubo conexión. Código: {urlLibroRequest.status_code}. Pulse el botón "cargar datos" para intentar nuevamente.'),
+                actions=[ft.TextButton("Cerrar", on_click=lambda e: self.pag.pop_dialog())],
+                modal=True
+                ))  
+            """     
         #Por último rellenamos las opciones de menuLibrosDelAutor por comprensión de listas:
         dropdown_options_librosDelAutor = [
             ft.dropdown.Option(

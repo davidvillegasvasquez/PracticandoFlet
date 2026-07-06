@@ -70,7 +70,7 @@ class SesionJWT():
             else:
                 # Si el refresh token también expiró, forzar cierre de sesión
                 self.pagina.pop_dialog()
-                self.pagina.push_route("/")
+                await self.pagina.push_route("/")
         except Exception:
             await self.pagina.push_route("/")
 
