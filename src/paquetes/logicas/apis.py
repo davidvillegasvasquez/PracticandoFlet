@@ -15,13 +15,12 @@ class SesionJWT():
         self.pagina = pag
         self.tokenAcceso = None
         self.tokenRefres = None
-        self.monitoreo_encendido = False
         self.error_text = None 
         self.contadorDeRenov=0 #Contador de renovaciones aceptables.
         self.expira_a = 0
         self.warning_dialog = ft.AlertDialog(
             title=ft.Text("Sesión a punto de expirar"),
-            content=ft.Text("Tu sesión caducará en 5 segundos. ¿Deseas prorrogarla por 10 seg más ?"),
+            content=ft.Text("Tu sesión caducará en 5 segundos. ¿Deseas prorrogarla por 15 seg más?"),
             actions=[
                 ft.Button("Renovar sesión", on_click=self.renew_token),
             ],
@@ -40,10 +39,9 @@ class SesionJWT():
                 data = response.json()
                 self.tokenAcceso = data["access"]
                 self.tokenRefres = data["refresh"]
-                self.monitoreo_encendido = True
                 self.pagina.run_task(self.monitor_token_expiry)
                 # Ajusta esto según el tiempo de vida de tu JWT (ej: 300 segundos)       
-                self.expira_a = asyncio.get_event_loop().time() + 30 
+                self.expira_a = asyncio.get_event_loop().time() + 15 
                 await self.pagina.push_route("/todo")
             else:
                 self.error_text = "Credenciales inválidas. Vuelva intentar."
@@ -64,7 +62,7 @@ class SesionJWT():
             if response.status_code == 200:
                 data = response.json()
                 self.tokenAcceso = data["access"]
-                self.expira_a = asyncio.get_event_loop().time() + 30
+                self.expira_a = asyncio.get_event_loop().time() + 15
                 self.pagina.run_task(self.monitor_token_expiry)
                 self.pagina.pop_dialog()
                 self.pagina.update()
@@ -79,7 +77,7 @@ class SesionJWT():
     
     async def monitor_token_expiry(self): 
         warning_dialog_shown = False
-        while True: #self.monitoreo_encendido:
+        while True:
             await asyncio.sleep(1) # Revisa el estado cada 1 segundos
             
             if not self.tokenAcceso:

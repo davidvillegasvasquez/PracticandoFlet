@@ -16,11 +16,17 @@ def main(pagina: ft.Page):
     async def manejar_cambio(e):
         if e.control.selected_index == 0:
             await pagina.push_route("/")
+
         elif e.control.selected_index == 1:
             await pagina.push_route("/todo")
+
         elif e.control.selected_index == 2:
             await pagina.push_route("/autorysuslibros")
+
         elif e.control.selected_index == 3:
+            await pagina.push_route("/operaciones_crud")
+
+        elif e.control.selected_index == 4:
             await pagina.push_route("/calculadora")
 
     def crear_cajonNav(indice_seleccionado=0):
@@ -41,21 +47,28 @@ def main(pagina: ft.Page):
                     label="To-do",
                     icon=ft.Icon(ft.Icons.STORE_OUTLINED),
                     selected_icon=ft.Icon(ft.Icons.STORE),
-                    disabled=True if sesion is None else False
+                    disabled=True if (sesion is None or sesion.tokenAcceso is  None) else False
                 ),
                 ft.Divider(thickness=2),
                 ft.NavigationDrawerDestination(
                     label="Autor y sus libros",
                     icon=ft.Icon(ft.Icons.STORE_OUTLINED),
                     selected_icon=ft.Icon(ft.Icons.STORE),
-                    disabled=True if sesion is None else False
+                    disabled=True if (sesion is None or sesion.tokenAcceso is None) else False
+                ),
+                ft.Divider(thickness=2),
+                ft.NavigationDrawerDestination(
+                    label="Operaciones CRUD",
+                    icon=ft.Icon(ft.Icons.STORE_OUTLINED),
+                    selected_icon=ft.Icon(ft.Icons.STORE),
+                    disabled=True if (sesion is None or sesion.tokenAcceso is None) else False
                 ),
                 ft.Divider(thickness=2),
                 ft.NavigationDrawerDestination(
                     label="Calculadora",
                     icon=ft.Icon(ft.Icons.PHONE_OUTLINED),
                     selected_icon=ft.Icons.PHONE,
-                    disabled=True if (sesion is None or sesion.tokenAcceso is None) else False
+                    #disabled=True if (sesion is None or sesion.tokenAcceso is None) else False
                 ),
             ],
         )
@@ -83,6 +96,7 @@ def main(pagina: ft.Page):
     botonEnviar = ft.Button("Entrar", on_click=logeo)
 
     def cambio_ruta(route):
+        print(f'sesion={sesion}')
         pagina.views.clear()
         pagina.views.append(
             ft.View(
@@ -173,6 +187,43 @@ def main(pagina: ft.Page):
                                     ),
                                     AutorYsusLibros(pagina, sesion),
                                     ft.Button(
+                                        "Ir a operaciones crud",
+                                        on_click=lambda _: asyncio.create_task(
+                                            pagina.push_route("/autorysuslibros")
+                                        ),
+                                    ),
+                                ]
+                            )
+                        )
+                    ],
+                    drawer=crear_cajonNav(indice_seleccionado=2),
+                )
+            )
+
+        if pagina.route == "/operaciones_crud":
+            pagina.views.append(
+                ft.View(
+                    route="/autorysuslibros",
+                    controls=[
+                        ft.SafeArea(
+                            content=ft.Column(
+                                controls=[
+                                    ft.AppBar(
+                                        title=ft.Text("Operaciones crud", expand=True),
+                                        bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
+                                        leading=ft.IconButton(
+                                            ft.Icons.MENU, on_click=mostrar_cajonNav
+                                        ),
+                                        automatically_imply_leading=False,
+                                        actions=[
+                                            ft.Text(
+                                                f'usuario:{sesion.usuario}',
+                                                visible=True if sesion.tokenAcceso is not None else False
+                                            )
+                                        ]
+                                    ),
+                                    ft.Text("Aquí van los controles crud."),
+                                    ft.Button(
                                         "Ir a calculadora",
                                         on_click=lambda _: asyncio.create_task(
                                             pagina.push_route("/calculadora")
@@ -210,9 +261,9 @@ def main(pagina: ft.Page):
                                     ),
                                     AppCalculadora(),
                                     ft.Button(
-                                        "Ir a autor y sus libros",
+                                        "Ir operaciones crud",
                                         on_click=lambda _: asyncio.create_task(
-                                            pagina.push_route("/autorysuslibros")
+                                            pagina.push_route("/operaciones_crud")
                                         ),
                                     ),
                                 ]
