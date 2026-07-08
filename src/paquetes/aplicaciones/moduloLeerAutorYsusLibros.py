@@ -5,7 +5,7 @@ from paquetes.controles.tablas.datatables import DataTable1
 
 url_api = "http://127.0.0.1:8000/catalogo/apirest/autores/"
 
-class AutorYsusLibros(ft.Column):
+class ConsultarAutorYsusLibros(ft.Column):
     def __init__(self, pagina, sesion):
         super().__init__()
         self.pag = pagina
@@ -43,7 +43,6 @@ class AutorYsusLibros(ft.Column):
             self.tablaLibrosDelAutorSelec,
             self.tablaLibrosDelAutorSelec_2,
         ]
-
 
     async def botonConsumirEndPoint(self, e):
         try:

@@ -1,12 +1,11 @@
 #navigationDrawerLogin.py
-
 import asyncio
 import flet as ft
-#from paquetes.controles.formularios.formularios import Formulario_login
 from paquetes.aplicaciones.agenda_tareas import TodoApp
 from paquetes.aplicaciones.calculadora import AppCalculadora
 from paquetes.logicas.apis import SesionJWT
-from paquetes.aplicaciones.moduloAutorYsusLibros import AutorYsusLibros
+from paquetes.aplicaciones.moduloLeerAutorYsusLibros import ConsultarAutorYsusLibros
+from paquetes.aplicaciones.moduloCrearAutorYsusLibros import CrearAutor
 
 sesion = None
 
@@ -21,10 +20,10 @@ def main(pagina: ft.Page):
             await pagina.push_route("/todo")
 
         elif e.control.selected_index == 2:
-            await pagina.push_route("/autorysuslibros")
+            await pagina.push_route("/read_crud")
 
         elif e.control.selected_index == 3:
-            await pagina.push_route("/operaciones_crud")
+            await pagina.push_route("/create_crud_autor")
 
         elif e.control.selected_index == 4:
             await pagina.push_route("/calculadora")
@@ -51,14 +50,14 @@ def main(pagina: ft.Page):
                 ),
                 ft.Divider(thickness=2),
                 ft.NavigationDrawerDestination(
-                    label="Autor y sus libros",
+                    label="Operación read/crud, consultar autor y sus libros",
                     icon=ft.Icon(ft.Icons.STORE_OUTLINED),
                     selected_icon=ft.Icon(ft.Icons.STORE),
                     disabled=True if (sesion is None or sesion.tokenAcceso is None) else False
                 ),
                 ft.Divider(thickness=2),
                 ft.NavigationDrawerDestination(
-                    label="Operaciones CRUD",
+                    label="Operación create/crud, crear autor",
                     icon=ft.Icon(ft.Icons.STORE_OUTLINED),
                     selected_icon=ft.Icon(ft.Icons.STORE),
                     disabled=True if (sesion is None or sesion.tokenAcceso is None) else False
@@ -68,7 +67,7 @@ def main(pagina: ft.Page):
                     label="Calculadora",
                     icon=ft.Icon(ft.Icons.PHONE_OUTLINED),
                     selected_icon=ft.Icons.PHONE,
-                    #disabled=True if (sesion is None or sesion.tokenAcceso is None) else False
+                    disabled=True if (sesion is None or sesion.tokenAcceso is None) else False
                 ),
             ],
         )
@@ -96,7 +95,6 @@ def main(pagina: ft.Page):
     botonEnviar = ft.Button("Entrar", on_click=logeo)
 
     def cambio_ruta(route):
-        print(f'sesion={sesion}')
         pagina.views.clear()
         pagina.views.append(
             ft.View(
@@ -110,7 +108,6 @@ def main(pagina: ft.Page):
                                     bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
                                     leading=ft.IconButton(
                                         ft.Icons.MENU,
-                                        #disabled=True if auth_state["access_token"] is None else False,
                                         on_click=mostrar_cajonNav
                                     ),
                                 ),
@@ -152,7 +149,7 @@ def main(pagina: ft.Page):
                                     ft.Button(
                                         "Ir a autor y sus libros",
                                         on_click=lambda _: asyncio.create_task(
-                                            pagina.push_route("/autorysuslibros")
+                                            pagina.push_route("/read_crud")
                                         ),
                                     ),
                                 ]
@@ -163,16 +160,16 @@ def main(pagina: ft.Page):
                 )
             )
 
-        if pagina.route == "/autorysuslibros":
+        if pagina.route == "/read_crud":
             pagina.views.append(
                 ft.View(
-                    route="/autorysuslibros",
+                    route="/read_crud",
                     controls=[
                         ft.SafeArea(
                             content=ft.Column(
                                 controls=[
                                     ft.AppBar(
-                                        title=ft.Text("Autor y sus libros", expand=True),
+                                        title=ft.Text("Operacion read/crud, Autor y sus libros", expand=True),
                                         bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
                                         leading=ft.IconButton(
                                             ft.Icons.MENU, on_click=mostrar_cajonNav
@@ -185,11 +182,11 @@ def main(pagina: ft.Page):
                                             )
                                         ]
                                     ),
-                                    AutorYsusLibros(pagina, sesion),
+                                    ConsultarAutorYsusLibros(pagina, sesion),
                                     ft.Button(
-                                        "Ir a operaciones crud",
+                                        "Ir a crear autor",
                                         on_click=lambda _: asyncio.create_task(
-                                            pagina.push_route("/autorysuslibros")
+                                            pagina.push_route("/create_crud_autor")
                                         ),
                                     ),
                                 ]
@@ -200,16 +197,16 @@ def main(pagina: ft.Page):
                 )
             )
 
-        if pagina.route == "/operaciones_crud":
+        if pagina.route == "/create_crud_autor":
             pagina.views.append(
                 ft.View(
-                    route="/autorysuslibros",
+                    route="/read_crud",
                     controls=[
                         ft.SafeArea(
                             content=ft.Column(
                                 controls=[
                                     ft.AppBar(
-                                        title=ft.Text("Operaciones crud", expand=True),
+                                        title=ft.Text("Operación c/crud crear autor", expand=True),
                                         bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
                                         leading=ft.IconButton(
                                             ft.Icons.MENU, on_click=mostrar_cajonNav
@@ -222,7 +219,7 @@ def main(pagina: ft.Page):
                                             )
                                         ]
                                     ),
-                                    ft.Text("Aquí van los controles crud."),
+                                    CrearAutor(pagina, sesion),
                                     ft.Button(
                                         "Ir a calculadora",
                                         on_click=lambda _: asyncio.create_task(
@@ -233,7 +230,7 @@ def main(pagina: ft.Page):
                             )
                         )
                     ],
-                    drawer=crear_cajonNav(indice_seleccionado=2),
+                    drawer=crear_cajonNav(indice_seleccionado=3),
                 )
             )
 
@@ -261,16 +258,16 @@ def main(pagina: ft.Page):
                                     ),
                                     AppCalculadora(),
                                     ft.Button(
-                                        "Ir operaciones crud",
+                                        "Ir a crear autor",
                                         on_click=lambda _: asyncio.create_task(
-                                            pagina.push_route("/operaciones_crud")
+                                            pagina.push_route("/create_crud_autor")
                                         ),
                                     ),
                                 ]
                             )
                         )
                     ],
-                    drawer=crear_cajonNav(indice_seleccionado=3),
+                    drawer=crear_cajonNav(indice_seleccionado=4),
                 )
             )
         pagina.update()

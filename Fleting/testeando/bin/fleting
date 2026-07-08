@@ -1,2 +1,0 @@
-#!/usr/bin/env bash
-exec "/home/david/Documentos/Informática/Flet/envFlet82uv/.venv/bin/fleting" "$@"
