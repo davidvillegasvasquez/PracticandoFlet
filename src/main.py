@@ -5,7 +5,7 @@ from paquetes.aplicaciones.agenda_tareas import TodoApp
 from paquetes.aplicaciones.calculadora import AppCalculadora
 from paquetes.logicas.apis import SesionJWT
 from paquetes.aplicaciones.moduloLeerAutorYsusLibros import ConsultarAutorYsusLibros
-from paquetes.aplicaciones.moduloCrearAutorYsusLibros import CrearAutor
+from paquetes.aplicaciones.moduloCrearAutorYsusLibros import CrearAutor, CrearLibro
 
 sesion = None
 
@@ -26,6 +26,9 @@ def main(pagina: ft.Page):
             await pagina.push_route("/create_crud_autor")
 
         elif e.control.selected_index == 4:
+            await pagina.push_route("/create_crud_libro")
+
+        elif e.control.selected_index == 5:
             await pagina.push_route("/calculadora")
 
     def crear_cajonNav(indice_seleccionado=0):
@@ -58,6 +61,13 @@ def main(pagina: ft.Page):
                 ft.Divider(thickness=2),
                 ft.NavigationDrawerDestination(
                     label="Operación create/crud, crear autor",
+                    icon=ft.Icon(ft.Icons.STORE_OUTLINED),
+                    selected_icon=ft.Icon(ft.Icons.STORE),
+                    disabled=True if (sesion is None or sesion.tokenAcceso is None) else False
+                ),
+                ft.Divider(thickness=2),
+                ft.NavigationDrawerDestination(
+                    label="Operación create/crud, crear libro",
                     icon=ft.Icon(ft.Icons.STORE_OUTLINED),
                     selected_icon=ft.Icon(ft.Icons.STORE),
                     disabled=True if (sesion is None or sesion.tokenAcceso is None) else False
@@ -200,7 +210,7 @@ def main(pagina: ft.Page):
         if pagina.route == "/create_crud_autor":
             pagina.views.append(
                 ft.View(
-                    route="/read_crud",
+                    route="/create_crud_autor",
                     controls=[
                         ft.SafeArea(
                             content=ft.Column(
@@ -223,7 +233,7 @@ def main(pagina: ft.Page):
                                     ft.Button(
                                         "Ir a calculadora",
                                         on_click=lambda _: asyncio.create_task(
-                                            pagina.push_route("/calculadora")
+                                            pagina.push_route("/create_crud_libro")
                                         ),
                                     ),
                                 ]
@@ -233,6 +243,43 @@ def main(pagina: ft.Page):
                     drawer=crear_cajonNav(indice_seleccionado=3),
                 )
             )
+
+        if pagina.route == "/create_crud_libro":
+            pagina.views.append(
+                ft.View(
+                    route="/create_crud_libro",
+                    controls=[
+                        ft.SafeArea(
+                            content=ft.Column(
+                                controls=[
+                                    ft.AppBar(
+                                        title=ft.Text("Operación c/crud crear libro", expand=True),
+                                        bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
+                                        leading=ft.IconButton(
+                                            ft.Icons.MENU, on_click=mostrar_cajonNav
+                                        ),
+                                        automatically_imply_leading=False,
+                                        actions=[
+                                            ft.Text(
+                                                f'usuario:{sesion.usuario}',
+                                                visible=True if sesion.tokenAcceso is not None else False
+                                            )
+                                        ]
+                                    ),
+                                    CrearLibro(pagina, sesion),
+                                    ft.Button(
+                                        "Ir a calculadora",
+                                        on_click=lambda _: asyncio.create_task(
+                                            pagina.push_route("/calculadora")
+                                        ),
+                                    ),
+                                ]
+                            )
+                        )
+                    ],
+                    drawer=crear_cajonNav(indice_seleccionado=4),
+                )
+            )        
 
         if pagina.route == "/calculadora":
             pagina.views.append(
@@ -258,16 +305,16 @@ def main(pagina: ft.Page):
                                     ),
                                     AppCalculadora(),
                                     ft.Button(
-                                        "Ir a crear autor",
+                                        "Ir a crear libro",
                                         on_click=lambda _: asyncio.create_task(
-                                            pagina.push_route("/create_crud_autor")
+                                            pagina.push_route("/create_crud_libro")
                                         ),
                                     ),
                                 ]
                             )
                         )
                     ],
-                    drawer=crear_cajonNav(indice_seleccionado=4),
+                    drawer=crear_cajonNav(indice_seleccionado=5),
                 )
             )
         pagina.update()

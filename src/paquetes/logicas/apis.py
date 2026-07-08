@@ -20,7 +20,7 @@ class SesionJWT():
         self.expira_a = 0
         self.warning_dialog = ft.AlertDialog(
             title=ft.Text("Sesión a punto de expirar"),
-            content=ft.Text("Tu sesión caducará en 5 segundos. ¿Deseas prorrogarla por 15 seg más?"),
+            content=ft.Text("Tu sesión caducará en 15 segundos. ¿Deseas prorrogarla por 60 seg más?"),
             actions=[
                 ft.Button("Renovar sesión", on_click=self.renew_token),
             ],
@@ -41,7 +41,7 @@ class SesionJWT():
                 self.tokenRefres = data["refresh"]
                 self.pagina.run_task(self.monitor_token_expiry)
                 # Ajusta esto según el tiempo de vida de tu JWT (ej: 300 segundos)       
-                self.expira_a = asyncio.get_event_loop().time() + 15 
+                self.expira_a = asyncio.get_event_loop().time() + 60 
                 await self.pagina.push_route("/todo")
             else:
                 self.error_text = "Credenciales inválidas. Vuelva intentar."
@@ -62,7 +62,7 @@ class SesionJWT():
             if response.status_code == 200:
                 data = response.json()
                 self.tokenAcceso = data["access"]
-                self.expira_a = asyncio.get_event_loop().time() + 15
+                self.expira_a = asyncio.get_event_loop().time() + 60
                 self.pagina.run_task(self.monitor_token_expiry)
                 self.pagina.pop_dialog()
                 self.pagina.update()
@@ -87,7 +87,7 @@ class SesionJWT():
             time_left = self.expira_a - current_time
             
             # Mostrar modal faltando 10 segundos (y si no está ya abierto)
-            if time_left <= 5 and not warning_dialog_shown:
+            if time_left <= 15 and not warning_dialog_shown:
                 if self.contadorDeRenov <= max_cantidad_renov:
                     self.contadorDeRenov+=1 
                     self.pagina.show_dialog(self.warning_dialog)
