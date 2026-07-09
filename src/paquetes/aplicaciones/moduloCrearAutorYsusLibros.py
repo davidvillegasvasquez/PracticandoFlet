@@ -65,7 +65,10 @@ class CrearLibro(ft.Column):
             editable=True,                            
             width=220,
             label="Autores",
-            options=["x", "y"],
+            options=[
+                ft.DropdownOption(key="red", text="Rómulo Gallegos"),
+                ft.DropdownOption(key="green", text="Stefan Zweig"),
+            ],
             on_select="",
             )
 
@@ -73,7 +76,10 @@ class CrearLibro(ft.Column):
             editable=True,                            
             width=220,
             label="Genero",
-            options=["x", "y"],
+            options=[
+                ft.DropdownOption(key="red", text="Comedia"),
+                ft.DropdownOption(key="green", text="Drama"),
+            ],
             on_select="",
             )
 
@@ -81,12 +87,16 @@ class CrearLibro(ft.Column):
             editable=True,                            
             width=220,
             label="Lenguaje",
-            options=["x", "y"],
+            options=[
+                ft.DropdownOption(key="red", text="Chino"),
+                ft.DropdownOption(key="green", text="Inglés"),
+            ],
             on_select="",
             )
 
         self.titulo_input = ft.TextField(label="Nombre")
-        self.descripcion_input = ft.TextField(label="Descripción") #multiline ideal para textos largos.
+        #Configuración de un TextField para textos largos. 3 lineas visible, 5 para comenzar hacer scroll:
+        self.descripcion_input = ft.TextField(label="Descripción", multiline=True, min_lines=3, max_lines=5)
         self.isbn_input = ft.TextField(label="Isbn")
         self.resultado_texto = ft.Text()
 
@@ -95,11 +105,11 @@ class CrearLibro(ft.Column):
             self.menuAutores,
             self.descripcion_input,
             self.isbn_input,
-            #ft.Column(controls=[self.menuGeneros, self.menuLenguajes]),
+            #ft.Row(controls=[self.menuGeneros, self.menuLenguajes]),
             self.menuGeneros,
             self.menuLenguajes,
             ft.Button("Crear", on_click=self.cargarAutores),
-            self.resultado_texto
+            self.resultado_texto,
         ]
 
     def cargarAutores(self, e):
