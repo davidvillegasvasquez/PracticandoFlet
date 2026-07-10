@@ -2,7 +2,10 @@ import flet as ft
 import asyncio
 import httpx
 
-API_URL = "http://127.0.0.1:8000/catalogo/apirest/autores/"
+API_URL_autores = "http://127.0.0.1:8000/catalogo/apirest/autores/"
+API_URL_libros = "http://127.0.0.1:8000/catalogo/apirest/libros/"
+API_URL_generos = "http://127.0.0.1:8000/catalogo/apirest/generos/"
+API_URL_lenguajes = "http://127.0.0.1:8000/catalogo/apirest/lenguajes/"
 
 class CrearAutor(ft.Column):
     def __init__(self, pagina, sesion):
@@ -39,7 +42,7 @@ class CrearAutor(ft.Column):
 
         try:
             async with httpx.AsyncClient(headers={"Authorization": f"Bearer {self.sesion.tokenAcceso}"}) as client:
-                response = await client.post(API_URL, json=datos, timeout=10.0)
+                response = await client.post(API_URL_autores, json=datos, timeout=10.0)
                 
                 if response.status_code == 201:
                     self.resultado_texto.value = "Autor creado exitosamente."
@@ -52,8 +55,6 @@ class CrearAutor(ft.Column):
             self.resultado_texto.value = f"Error de conexión: {str(ex)}"
             self.resultado_texto.color = "red"
 
-
-
 class CrearLibro(ft.Column):
     def __init__(self, pagina, sesion):
         super().__init__()
@@ -65,10 +66,7 @@ class CrearLibro(ft.Column):
             editable=True,                            
             width=220,
             label="Autores",
-            options=[
-                ft.DropdownOption(key="red", text="Rómulo Gallegos"),
-                ft.DropdownOption(key="green", text="Stefan Zweig"),
-            ],
+            options=[],
             on_select="",
             )
 
@@ -76,10 +74,7 @@ class CrearLibro(ft.Column):
             editable=True,                            
             width=220,
             label="Genero",
-            options=[
-                ft.DropdownOption(key="red", text="Comedia"),
-                ft.DropdownOption(key="green", text="Drama"),
-            ],
+            options=[],
             on_select="",
             )
 
@@ -87,15 +82,12 @@ class CrearLibro(ft.Column):
             editable=True,                            
             width=220,
             label="Lenguaje",
-            options=[
-                ft.DropdownOption(key="red", text="Chino"),
-                ft.DropdownOption(key="green", text="Inglés"),
-            ],
+            options=[],
             on_select="",
             )
 
         self.titulo_input = ft.TextField(label="Nombre")
-        #Configuración de un TextField para textos largos. 3 lineas visible, 5 para comenzar hacer scroll:
+        #Configuración de un TextField para textos largos. Comienza con 3 lineas visible, a la 6 para comenzar hacer scroll:
         self.descripcion_input = ft.TextField(label="Descripción", multiline=True, min_lines=3, max_lines=5)
         self.isbn_input = ft.TextField(label="Isbn")
         self.resultado_texto = ft.Text()
@@ -105,25 +97,27 @@ class CrearLibro(ft.Column):
             self.menuAutores,
             self.descripcion_input,
             self.isbn_input,
-            #ft.Row(controls=[self.menuGeneros, self.menuLenguajes]),
             self.menuGeneros,
             self.menuLenguajes,
-            ft.Button("Crear", on_click=self.cargarAutores),
+            ft.Button("Crear", on_click=self.cargarAutoresGenerosYlenguajes), #self.botonCrearLibro),
             self.resultado_texto,
         ]
 
-    def cargarAutores(self, e):
-        self.pag.update()
-"""
+    
     async def cargarAutoresGenerosYlenguajes(self, e):
         try:
             async with httpx.AsyncClient(headers={"Authorization": f"Bearer {self.sesion.tokenAcceso}"}) as client:
-                respuestaAutores = await client.get(API_URL)     
+                respuestaAutores = await client.get(API_URL_autores)     
+                respuestaGeneros = await client.get(API_URL_generos)
+                respuestaLenguajes = await client.get(API_URL_lenguajes)
 
-            diccionario = respuesta.json() #Analiza el cuerpo de la respuesta como JSON y devuelve un diccionario o lista de Python.
-            
+            diccionarioAutores = respuestaAutores.json() #Analiza el cuerpo de la respuesta como JSON y devuelve un diccionario o lista de Python.
+            diccionarioGeneros = respuestaGeneros.json()
+            diccionarioLenguajes = respuestaLenguajes.json()
             #Tomamos el primer elemento de results que es una lista de diccionarios:
-            listDeDicts = diccionario['results']
+            listDeDictsAutores = diccionarioAutores['results']
+            listDeDictsGeneros = diccionarioGeneros['results']
+            listDeDictsLenguajes = diccionarioLenguajes['results']
 
         except Exception as error:
             
@@ -135,21 +129,42 @@ class CrearLibro(ft.Column):
             ))
 
         else: 
-            #Filtramos listDeDicts para extraer los campos deseados de cada uno de los diccionarios que contienen los datos del autor:
-            self.listaFiltrada = [{"id": d["id"], "nombre": d["nombre"], "apellido": d["apellido"]} for d in listDeDicts]
+            #Filtramos listDeDictsAutores para extraer los campos deseados de cada uno de los diccionarios que contienen los datos del autor. Los otros dos no se necesitan ser filtrados:
+            listDeDictFiltAutores = [{"id": d["id"], "nombre": d["nombre"], "apellido": d["apellido"]} for d in listDeDictsAutores]
 
-            #Así convertimos una lista de diccionarios a una lista de ft.dropdown.Option en su carga inicial y definitiva:
             dropdown_options_autores = [
                 ft.dropdown.Option(
-                    key=autor["id"],      # El valor que se obtiene al seleccionar
+                    key=autor["id"],# El valor que se obtiene al seleccionar
                     text=f"{autor['nombre']} {autor['apellido']}" #Así hacemos un atributo text compuesto. 
                 )
-            for autor in self.listaFiltrada
+            for autor in listDeDictFiltAutores
             ]
 
-            self.menuAutores.options = dropdown_options_autores   
+            self.menuAutores.options = dropdown_options_autores
             self.menuAutores.update()
 
+            dropdown_options_generos = [
+                ft.dropdown.Option(
+                    key=genero["id"],      # El valor que se obtiene al seleccionar
+                    text=f"{genero['nombre']}" #Así hacemos un atributo text compuesto. 
+                )
+            for genero in listDeDictsGeneros
+            ]
+
+            self.menuGeneros.options = dropdown_options_generos
+            self.menuGeneros.update()
+
+            dropdown_options_lenguajes = [
+                ft.dropdown.Option(
+                    key=lenguaje["id"],      # El valor que se obtiene al seleccionar
+                    text=f"{lenguaje['nombre']}" #Así hacemos un atributo text compuesto. 
+                )
+            for lenguaje in listDeDictsLenguajes
+            ]
+
+            self.menuLenguajes.options = dropdown_options_lenguajes
+            self.menuLenguajes.update()
+"""
     async def botonCrearLibro(self, e):
         self.resultado_texto.value = "Enviando datos..."
         self.pag.update()
@@ -163,7 +178,7 @@ class CrearLibro(ft.Column):
 
         try:
             async with httpx.AsyncClient(headers={"Authorization": f"Bearer {self.sesion.tokenAcceso}"}) as client:
-                response = await client.post(API_URL, json=datos, timeout=10.0)
+                response = await client.post(API_URL_autores, json=datos, timeout=10.0)
                 
                 if response.status_code == 201:
                     self.resultado_texto.value = "Autor creado exitosamente."
