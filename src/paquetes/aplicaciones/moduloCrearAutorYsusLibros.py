@@ -60,8 +60,7 @@ class CrearLibro(ft.Column):
         super().__init__()
         self.pag = pagina
         self.sesion = sesion
-    
-    def build(self):
+        #En un modelo asíncrono, si quieres ver los controles precargados con datos de los endpoints al navegar a la vista, debes inicializarlos primero en el constructor:
         self.menuAutores = ft.Dropdown(
             editable=True,                            
             width=220,
@@ -69,7 +68,6 @@ class CrearLibro(ft.Column):
             options=[],
             on_select="",
             )
-
         self.menuGeneros = ft.Dropdown(
             editable=True,                            
             width=220,
@@ -77,7 +75,6 @@ class CrearLibro(ft.Column):
             options=[],
             on_select="",
             )
-
         self.menuLenguajes = ft.Dropdown(
             editable=True,                            
             width=220,
@@ -85,6 +82,12 @@ class CrearLibro(ft.Column):
             options=[],
             on_select="",
             )
+    
+    
+    def build(self):
+        self.menuAutores
+        self.menuGeneros 
+        self.menuLenguajes
 
         self.titulo_input = ft.TextField(label="Nombre")
         #Configuración de un TextField para textos largos. Comienza con 3 lineas visible, a la 6 para comenzar hacer scroll:
@@ -99,12 +102,14 @@ class CrearLibro(ft.Column):
             self.isbn_input,
             self.menuGeneros,
             self.menuLenguajes,
-            ft.Button("Crear", on_click=self.cargarAutoresGenerosYlenguajes), #self.botonCrearLibro),
+            ft.Button("Crear", on_click=""), #self.cargarAutoresGenerosYlenguajes), #self.botonCrearLibro),
             self.resultado_texto,
         ]
 
-    
-    async def cargarAutoresGenerosYlenguajes(self, e):
+    async def view_will_mount(self):
+        await self.cargarAutoresGenerosYlenguajes()
+      
+    async def cargarAutoresGenerosYlenguajes(self):
         try:
             async with httpx.AsyncClient(headers={"Authorization": f"Bearer {self.sesion.tokenAcceso}"}) as client:
                 respuestaAutores = await client.get(API_URL_autores)     
@@ -139,9 +144,7 @@ class CrearLibro(ft.Column):
                 )
             for autor in listDeDictFiltAutores
             ]
-
-            self.menuAutores.options = dropdown_options_autores
-            self.menuAutores.update()
+            self.menuAutores.options = dropdown_options_autores   
 
             dropdown_options_generos = [
                 ft.dropdown.Option(
@@ -150,10 +153,8 @@ class CrearLibro(ft.Column):
                 )
             for genero in listDeDictsGeneros
             ]
-
             self.menuGeneros.options = dropdown_options_generos
-            self.menuGeneros.update()
-
+            
             dropdown_options_lenguajes = [
                 ft.dropdown.Option(
                     key=lenguaje["id"],      # El valor que se obtiene al seleccionar
@@ -161,9 +162,14 @@ class CrearLibro(ft.Column):
                 )
             for lenguaje in listDeDictsLenguajes
             ]
-
             self.menuLenguajes.options = dropdown_options_lenguajes
-            self.menuLenguajes.update()
+            #No actualizamos aquí porque no se han conformado aún los dropdown por la asíncronía que implica el view_will_mount que lo 
+#ejecutaremos desde el main con el atributo de View flet, on_will_mount. Todo esto porque no se puede ejecutar métodos asíncronos desde el constructor:
+
+            #self.menuAutores.update()
+            #self.menuGeneros.update()
+            #self.menuLenguajes.update()
+        
 """
     async def botonCrearLibro(self, e):
         self.resultado_texto.value = "Enviando datos..."

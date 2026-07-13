@@ -9,8 +9,11 @@ from paquetes.aplicaciones.moduloCrearAutorYsusLibros import CrearAutor, CrearLi
 
 sesion = None
 
-def main(pagina: ft.Page):
+async def main(pagina: ft.Page):
     pagina.title = "Cajón de navegación"
+
+    async def view_will_mount():
+        await fetch_data_and_draw()
 
     async def manejar_cambio(e):
         if e.control.selected_index == 0:
@@ -104,7 +107,7 @@ def main(pagina: ft.Page):
     password = ft.TextField(label="Contraseña")
     botonEnviar = ft.Button("Entrar", on_click=logeo)
 
-    def cambio_ruta(route):
+    async def cambio_ruta(route):
         pagina.views.clear()
         pagina.views.append(
             ft.View(
@@ -245,8 +248,9 @@ def main(pagina: ft.Page):
             )
 
         if pagina.route == "/create_crud_libro":
-            pagina.views.append(
-                ft.View(
+            libro_nuevo=CrearLibro(pagina, sesion)
+
+            vista=ft.View(
                     route="/create_crud_libro",
                     controls=[
                         ft.SafeArea(
@@ -266,21 +270,33 @@ def main(pagina: ft.Page):
                                             )
                                         ]
                                     ),
-                                    CrearLibro(pagina, sesion),
+                                    libro_nuevo,
                                     ft.Button(
                                         "Ir a calculadora",
                                         on_click=lambda _: asyncio.create_task(
                                             pagina.push_route("/calculadora")
-                                        ),
-                                    ),
+                                            )
+                                    ), 
+                                    #Botón comodin invisibilizado que simula su pulsación con vista.on_will_mount al cargar esta vista. Todo esto porque las clases python no aceptan contructores asíncronos:
+                                    ft.Button(
+                                        "Actualizar datos",
+                                        on_click=await libro_nuevo.cargarAutoresGenerosYlenguajes(),
+                                        visible=False
+                                    ),                                   
                                 ]
                             )
                         )
                     ],
+                    scroll=ft.ScrollMode.AUTO,
                     drawer=crear_cajonNav(indice_seleccionado=4),
                 )
-            )        
 
+            # Asignamos el evento de ciclo de vida de la vista
+            vista.on_will_mount = await libro_nuevo.view_will_mount()
+            #Finalmente es que agregamos a la pila de navegación. Todo por la asíncronía que requiere mostrar controles precargados:
+            pagina.views.append(vista)
+            pagina.update()      
+     
         if pagina.route == "/calculadora":
             pagina.views.append(
                 ft.View(
@@ -326,7 +342,7 @@ def main(pagina: ft.Page):
 
     pagina.on_route_change = cambio_ruta
     pagina.on_view_pop = vista_pop
-    cambio_ruta(pagina.route)
+    await cambio_ruta(pagina.route)
 
 
 if __name__ == "__main__":
