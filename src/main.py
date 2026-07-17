@@ -277,12 +277,13 @@ async def main(pagina: ft.Page):
                                             pagina.push_route("/calculadora")
                                             )
                                     ), 
-                                    #Botón comodin invisibilizado que simula su pulsación con vista.on_will_mount al cargar esta vista. Todo esto porque las clases python no aceptan contructores asíncronos:
+                                    #Botón comodin invisibilizado que simula su pulsación con vista.on_will_mount al cargar esta vista. 
+#Todo esto porque las clases python no aceptan contructores asíncronos:                                    
                                     ft.Button(
                                         "Actualizar datos",
                                         on_click=await libro_nuevo.cargarAutoresGenerosYlenguajes(),
                                         visible=False
-                                    ),                                   
+                                    ),                                                                     
                                 ]
                             )
                         )
@@ -292,7 +293,7 @@ async def main(pagina: ft.Page):
                 )
 
             # Asignamos el evento de ciclo de vida de la vista
-            vista.on_will_mount = await libro_nuevo.view_will_mount()
+            vista.on_will_mount = await libro_nuevo.laVista_se_montara()
             #Finalmente es que agregamos a la pila de navegación. Todo por la asíncronía que requiere mostrar controles precargados:
             pagina.views.append(vista)
             pagina.update()      
@@ -343,7 +344,6 @@ async def main(pagina: ft.Page):
     pagina.on_route_change = cambio_ruta
     pagina.on_view_pop = vista_pop
     await cambio_ruta(pagina.route)
-
 
 if __name__ == "__main__":
     ft.run(main)

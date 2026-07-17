@@ -102,11 +102,13 @@ class CrearLibro(ft.Column):
             self.isbn_input,
             self.menuGeneros,
             self.menuLenguajes,
-            ft.Button("Crear", on_click=""), #self.cargarAutoresGenerosYlenguajes), #self.botonCrearLibro),
+            ft.Button("Crear", on_click=self.botonCrearLibro),
             self.resultado_texto,
         ]
 
-    async def view_will_mount(self):
+    #Método para ejecutar desde main con el atributo método de los objetos ft.View, on_will_mount (vista.on_will_mount):
+
+    async def laVista_se_montara(self):
         await self.cargarAutoresGenerosYlenguajes()
       
     async def cargarAutoresGenerosYlenguajes(self):
@@ -148,8 +150,8 @@ class CrearLibro(ft.Column):
 
             dropdown_options_generos = [
                 ft.dropdown.Option(
-                    key=genero["id"],      # El valor que se obtiene al seleccionar
-                    text=f"{genero['nombre']}" #Así hacemos un atributo text compuesto. 
+                    key=genero["id"],      
+                    text=genero['nombre'] 
                 )
             for genero in listDeDictsGeneros
             ]
@@ -157,37 +159,92 @@ class CrearLibro(ft.Column):
             
             dropdown_options_lenguajes = [
                 ft.dropdown.Option(
-                    key=lenguaje["id"],      # El valor que se obtiene al seleccionar
-                    text=f"{lenguaje['nombre']}" #Así hacemos un atributo text compuesto. 
+                    key=lenguaje["id"], 
+                    text=lenguaje['nombre'] 
                 )
             for lenguaje in listDeDictsLenguajes
             ]
             self.menuLenguajes.options = dropdown_options_lenguajes
-            #No actualizamos aquí porque no se han conformado aún los dropdown por la asíncronía que implica el view_will_mount que lo 
+            #No actualizamos los dropdown aquí porque no se han conformado aún por la asíncronía que implica el view_will_mount que lo 
 #ejecutaremos desde el main con el atributo de View flet, on_will_mount. Todo esto porque no se puede ejecutar métodos asíncronos desde el constructor:
 
             #self.menuAutores.update()
             #self.menuGeneros.update()
             #self.menuLenguajes.update()
         
-"""
     async def botonCrearLibro(self, e):
         self.resultado_texto.value = "Enviando datos..."
         self.pag.update()
+
+        #Lamentablemente tenemos que hacer el trabajon de ubicar y extraer los valores seleccionados en los menus dropdown. No existe una forma directa como si fuera una lista o dict:
+        
+        #Recuerde que self.menuAutores.value es un str que representa el id, y key=autor["id"] en este caso guarda un entero, por lo cual tenemos que convertirlo a entero para poder compararlos en su busqueda posterior. Lo mismo aplica a genero y lenguaje:
+
+        if self.menuAutores.value is not None:
+            val_select_autor = int(self.menuAutores.value)
+        else:
+            self.pag.show_dialog(ft.AlertDialog(
+                title=ft.Text("Error de ingreso"),
+                content=ft.Text('Debe seleccionar un autor.'),
+                actions=[ft.TextButton("Cerrar", on_click=lambda e: self.pag.pop_dialog())],
+                modal=True
+            ))
+            return #Forzamos la finalización del método.
+
+        if self.menuGeneros.value is not None:
+            val_select_gen = int(self.menuGeneros.value)
+        else:
+            self.pag.show_dialog(ft.AlertDialog(
+                title=ft.Text("Error de ingreso"),
+                content=ft.Text('Debe seleccionar un genero.'),
+                actions=[ft.TextButton("Cerrar", on_click=lambda e: self.pag.pop_dialog())],
+                modal=True
+            ))
+            return
+
+        if self.menuLenguajes.value is not None:
+            val_select_len = int(self.menuLenguajes.value)
+        else:
+            self.pag.show_dialog(ft.AlertDialog(
+                title=ft.Text("Error de ingreso"),
+                content=ft.Text('Debe seleccionar un lenguaje.'),
+                actions=[ft.TextButton("Cerrar", on_click=lambda e: self.pag.pop_dialog())],
+                modal=True
+            ))
+            return
+        """
+        # Iteramos sobre las opciones para extraer el texto
+        autor_selec = next((opt.text for opt in self.menuAutores.options if opt.key == val_select_autor), None)
+        
+        genero_selec = next((opt.text for opt in self.menuGeneros.options if opt.key == val_select_gen ), None)
+
+        lenguaje_selec = next((opt.text for opt in self.menuGeneros.options if opt.key == val_select_len), None)
+        """
         
         datos = {
-            "nombre": self.nombre_input.value,
-            "apellido": self.apellido_input.value,
-            "nacimiento": self.nacimiento_input.value,
-            "muerte": self.muerte_input.value
+            "titulo": self.titulo_input.value,
+            "autor_id": val_select_autor,
+            "descripcion": self.descripcion_input.value,
+            "isbn": self.isbn_input.value,
+            "genero": val_select_gen,
+            "lenguaje": val_select_len
         }
+        """
+        print(f"autor_selec = {autor_selec}")
+        print(f"genero_selec = {genero_selec}")
+        print(f"lenguaje_selec = {lenguaje_selec}")
+        
+        print(f"val_select_autor = {val_select_autor}")
+        print(f"val_select_autor = {val_select_gen}")
+        print(f"val_select_autor = {val_select_len}")
+        """
 
         try:
             async with httpx.AsyncClient(headers={"Authorization": f"Bearer {self.sesion.tokenAcceso}"}) as client:
-                response = await client.post(API_URL_autores, json=datos, timeout=10.0)
+                response = await client.post(API_URL_libros, json=datos, timeout=10.0)
                 
                 if response.status_code == 201:
-                    self.resultado_texto.value = "Autor creado exitosamente."
+                    self.resultado_texto.value = "Libro creado exitosamente."
                     self.resultado_texto.color = "green"
                 else:
                     self.resultado_texto.value = f"Error {response.status_code}: {response.text}"
@@ -196,4 +253,3 @@ class CrearLibro(ft.Column):
         except Exception as ex:
             self.resultado_texto.value = f"Error de conexión: {str(ex)}"
             self.resultado_texto.color = "red"
-"""

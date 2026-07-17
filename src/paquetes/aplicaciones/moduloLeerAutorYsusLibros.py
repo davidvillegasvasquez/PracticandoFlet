@@ -70,7 +70,7 @@ class ConsultarAutorYsusLibros(ft.Column):
             #Así convertimos una lista de diccionarios a una lista de ft.dropdown.Option en su carga inicial y definitiva:
             dropdown_options_autores = [
                 ft.dropdown.Option(
-                    key=autor["id"],      # El valor que se obtiene al seleccionar
+                    key=autor["id"],      # El valor que se obtiene al seleccionar. Recuerde que autor["id"] es un entero y Dropdown.value es un str que deberá convertir a entero para poder compararlos.
                     text=f"{autor['nombre']} {autor['apellido']}" #Así hacemos un atributo text compuesto. 
                 )
             for autor in self.listaFiltrada
