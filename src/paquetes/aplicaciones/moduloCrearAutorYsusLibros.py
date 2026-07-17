@@ -227,7 +227,7 @@ class CrearLibro(ft.Column):
             "descripcion": self.descripcion_input.value,
             "isbn": self.isbn_input.value,
             "genero": val_select_gen,
-            "lenguaje": val_select_len
+            "lenguaje_id": val_select_len
         }
         """
         print(f"autor_selec = {autor_selec}")
