@@ -213,31 +213,22 @@ class CrearLibro(ft.Column):
             ))
             return
         """
+        Aquí no necesitamos obtener el valor de los campor porque estamos usando un serializador hipervinculado, lo cual requiere el número del índice del item para construir a partir de este la url necesaria, y no un valor primitivo como un entero o str. En vistas basadas en serializadores normales si lo necesitaríamos.
         # Iteramos sobre las opciones para extraer el texto
         autor_selec = next((opt.text for opt in self.menuAutores.options if opt.key == val_select_autor), None)
         
-        genero_selec = next((opt.text for opt in self.menuGeneros.options if opt.key == val_select_gen ), None)
-
-        lenguaje_selec = next((opt.text for opt in self.menuGeneros.options if opt.key == val_select_len), None)
+        genero_selec = next((opt.text for...
         """
         
         datos = {
             "titulo": self.titulo_input.value,
+            #Debemos usar el patron modelo_id, porque vamos a construir urls (serializador hipervinculado), y trabajamos en base del campo relacionado para construirlos:
             "autor_id": val_select_autor,
             "descripcion": self.descripcion_input.value,
             "isbn": self.isbn_input.value,
-            "genero": val_select_gen,
+            "genero_id": val_select_gen,
             "lenguaje_id": val_select_len
         }
-        """
-        print(f"autor_selec = {autor_selec}")
-        print(f"genero_selec = {genero_selec}")
-        print(f"lenguaje_selec = {lenguaje_selec}")
-        
-        print(f"val_select_autor = {val_select_autor}")
-        print(f"val_select_autor = {val_select_gen}")
-        print(f"val_select_autor = {val_select_len}")
-        """
 
         try:
             async with httpx.AsyncClient(headers={"Authorization": f"Bearer {self.sesion.tokenAcceso}"}) as client:
