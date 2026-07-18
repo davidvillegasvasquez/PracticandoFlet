@@ -193,6 +193,7 @@ class CrearLibro(ft.Column):
 
         if self.menuGeneros.value is not None:
             val_select_gen = int(self.menuGeneros.value)
+            val_select_gen_list= [val_select_gen]
         else:
             self.pag.show_dialog(ft.AlertDialog(
                 title=ft.Text("Error de ingreso"),
@@ -226,7 +227,7 @@ class CrearLibro(ft.Column):
             "autor_id": val_select_autor,
             "descripcion": self.descripcion_input.value,
             "isbn": self.isbn_input.value,
-            "genero_id": val_select_gen,
+            "genero": val_select_gen_list,
             "lenguaje_id": val_select_len
         }
 
@@ -237,6 +238,7 @@ class CrearLibro(ft.Column):
                 if response.status_code == 201:
                     self.resultado_texto.value = "Libro creado exitosamente."
                     self.resultado_texto.color = "green"
+                    #self.pag.push_route("/")
                 else:
                     self.resultado_texto.value = f"Error {response.status_code}: {response.text}"
                     self.resultado_texto.color = "red" 
