@@ -55,12 +55,14 @@ class CrearAutor(ft.Column):
             self.resultado_texto.value = f"Error de conexión: {str(ex)}"
             self.resultado_texto.color = "red"
 
+#--------------------------------
+
 class CrearLibro(ft.Column):
     def __init__(self, pagina, sesion):
         super().__init__()
         self.pag = pagina
         self.sesion = sesion
-        #En un modelo asíncrono, si quieres ver los controles precargados con datos de los endpoints al navegar a la vista, debes inicializarlos primero en el constructor:
+        #En un modelo asíncrono, si quieres ver los controles precargados con datos de los endpoints al navegar a la vista, debes inicializarlos primero en el constructor y no en el método build:
         self.menuAutores = ft.Dropdown(
             editable=True,                            
             width=220,
@@ -68,13 +70,9 @@ class CrearLibro(ft.Column):
             options=[],
             on_select="",
             )
-        self.menuGeneros = ft.Dropdown(
-            editable=True,                            
-            width=220,
-            label="Genero",
-            options=[],
-            on_select="",
-            )
+
+        self.menuGeneros=ft.ListView(controls=[], expand=True)
+
         self.menuLenguajes = ft.Dropdown(
             editable=True,                            
             width=220,
@@ -83,8 +81,8 @@ class CrearLibro(ft.Column):
             on_select="",
             )
     
-    
     def build(self):
+        #Declaración de los controles que deben mostrarse precarcados al ir a la vista:
         self.menuAutores
         self.menuGeneros 
         self.menuLenguajes
@@ -100,14 +98,20 @@ class CrearLibro(ft.Column):
             self.menuAutores,
             self.descripcion_input,
             self.isbn_input,
-            self.menuGeneros,
+            ft.Container(
+                height=100, # Define el área visible para forzar scroll
+                width=250, # Espacio entre elementos
+                padding=10,
+                border=ft.Border.all(1, ft.Colors.BLACK),
+                border_radius=ft.BorderRadius.all(value=5),
+                content=self.menuGeneros,
+            ),
             self.menuLenguajes,
             ft.Button("Crear", on_click=self.botonCrearLibro),
             self.resultado_texto,
         ]
 
     #Método para ejecutar desde main con el atributo método de los objetos ft.View, on_will_mount (vista.on_will_mount):
-
     async def laVista_se_montara(self):
         await self.cargarAutoresGenerosYlenguajes()
       
@@ -121,7 +125,7 @@ class CrearLibro(ft.Column):
             diccionarioAutores = respuestaAutores.json() #Analiza el cuerpo de la respuesta como JSON y devuelve un diccionario o lista de Python.
             diccionarioGeneros = respuestaGeneros.json()
             diccionarioLenguajes = respuestaLenguajes.json()
-            #Tomamos el primer elemento de results que es una lista de diccionarios:
+            #Tomamos el primer elemento de results que es una lista de diccionarios con los campos del modelo:
             listDeDictsAutores = diccionarioAutores['results']
             listDeDictsGeneros = diccionarioGeneros['results']
             listDeDictsLenguajes = diccionarioLenguajes['results']
@@ -136,9 +140,10 @@ class CrearLibro(ft.Column):
             ))
 
         else: 
-            #Filtramos listDeDictsAutores para extraer los campos deseados de cada uno de los diccionarios que contienen los datos del autor. Los otros dos no se necesitan ser filtrados:
+            #Filtramos listDeDictsAutores para extraer los campos deseados (id y nombre) de cada uno de los diccionarios que contienen los datos del autor. Los otros dos no necesitan ser filtrados porque sólo tinen id y nombre:
             listDeDictFiltAutores = [{"id": d["id"], "nombre": d["nombre"], "apellido": d["apellido"]} for d in listDeDictsAutores]
 
+            #Hacemos los dropdowns:
             dropdown_options_autores = [
                 ft.dropdown.Option(
                     key=autor["id"],# El valor que se obtiene al seleccionar
@@ -146,17 +151,20 @@ class CrearLibro(ft.Column):
                 )
             for autor in listDeDictFiltAutores
             ]
-            self.menuAutores.options = dropdown_options_autores   
+            self.menuAutores.options = dropdown_options_autores 
 
-            dropdown_options_generos = [
-                ft.dropdown.Option(
-                    key=genero["id"],      
-                    text=genero['nombre'] 
-                )
-            for genero in listDeDictsGeneros
-            ]
-            self.menuGeneros.options = dropdown_options_generos
-            
+            #Para genero hacemo una lista de checkboxs porque no existe un dropdown de selección múltiple:          
+            self.menuGeneros.controls = [
+                ft.Checkbox(
+                    label=task["nombre"],
+                    value=False,
+                    # Attaching a full dictionary to the data attribute
+                    data=task["id"],
+                    on_change="" #on_task_toggle
+                ) 
+                for task in listDeDictsGeneros
+            ]          
+
             dropdown_options_lenguajes = [
                 ft.dropdown.Option(
                     key=lenguaje["id"], 
@@ -165,8 +173,8 @@ class CrearLibro(ft.Column):
             for lenguaje in listDeDictsLenguajes
             ]
             self.menuLenguajes.options = dropdown_options_lenguajes
-            #No actualizamos los dropdown aquí porque no se han conformado aún por la asíncronía que implica el view_will_mount que lo 
-#ejecutaremos desde el main con el atributo de View flet, on_will_mount. Todo esto porque no se puede ejecutar métodos asíncronos desde el constructor:
+            #No actualizamos los controles aquí porque no se han conformado aún por la asíncronía que implica el view_will_mount que lo 
+#ejecutaremos desde su cliente, main, con el atributo de la clase View flet, on_will_mount. Todo esto porque no se puede ejecutar métodos asíncronos desde el constructor:
 
             #self.menuAutores.update()
             #self.menuGeneros.update()
@@ -176,9 +184,9 @@ class CrearLibro(ft.Column):
         self.resultado_texto.value = "Enviando datos..."
         self.pag.update()
 
-        #Lamentablemente tenemos que hacer el trabajon de ubicar y extraer los valores seleccionados en los menus dropdown. No existe una forma directa como si fuera una lista o dict:
+        #Lamentablemente tenemos que hacer el trabajon de ubicar y extraer los valores seleccionados en los menus dropdown y la lista de checkboxs. No existe una forma directa como si fuera una lista o dict:
         
-        #Recuerde que self.menuAutores.value es un str que representa el id, y key=autor["id"] en este caso guarda un entero, por lo cual tenemos que convertirlo a entero para poder compararlos en su busqueda posterior. Lo mismo aplica a genero y lenguaje:
+        #Recuerde que self.menuAutores.value es un str que representa el id, y key=autor["id"] en este caso guarda un entero, por lo cual tenemos que convertirlo a entero para poder compararlos en su busqueda posterior. Lo mismo aplica a lenguaje:
 
         if self.menuAutores.value is not None:
             val_select_autor = int(self.menuAutores.value)
@@ -191,18 +199,21 @@ class CrearLibro(ft.Column):
             ))
             return #Forzamos la finalización del método.
 
-        if self.menuGeneros.value is not None:
-            val_select_gen = int(self.menuGeneros.value)
-            val_select_gen_list= [val_select_gen]
+        #Por comprensión de listas creamos la lista de generos seleccionados:
+        gen_selec=[
+            cb.data for cb in self.menuGeneros.controls if cb.value
+        ]
+        if gen_selec: #Lista no vacía, el usuario seleccionó al menos un genero.
+            pass
         else:
             self.pag.show_dialog(ft.AlertDialog(
                 title=ft.Text("Error de ingreso"),
-                content=ft.Text('Debe seleccionar un genero.'),
+                content=ft.Text('Debe seleccionar al menos un genero.'),
                 actions=[ft.TextButton("Cerrar", on_click=lambda e: self.pag.pop_dialog())],
                 modal=True
             ))
             return
-
+      
         if self.menuLenguajes.value is not None:
             val_select_len = int(self.menuLenguajes.value)
         else:
@@ -213,21 +224,22 @@ class CrearLibro(ft.Column):
                 modal=True
             ))
             return
+
         """
-        Aquí no necesitamos obtener el valor de los campor porque estamos usando un serializador hipervinculado, lo cual requiere el número del índice del item para construir a partir de este la url necesaria, y no un valor primitivo como un entero o str. En vistas basadas en serializadores normales si lo necesitaríamos.
+        Aquí no necesitamos obtener el valor literal de los campos porque estamos usando un serializador hipervinculado, lo cual requiere el número del índice del item para construir a partir de este la url necesaria, y no un str. En vistas basadas en serializadores normales si necesitaríamos ese valor literal directamente.
         # Iteramos sobre las opciones para extraer el texto
         autor_selec = next((opt.text for opt in self.menuAutores.options if opt.key == val_select_autor), None)
         
         genero_selec = next((opt.text for...
         """
-        
+        #Procedemos a contruir la payload o cuerpo (body) de la petición o solicitud:
         datos = {
             "titulo": self.titulo_input.value,
-            #Debemos usar el patron modelo_id, porque vamos a construir urls (serializador hipervinculado), y trabajamos en base del campo relacionado para construirlos:
+            #Debemos usar el patron modelo_id en los campos con relaciones foreingkey, porque vamos a construir urls con serializadores hipervinculados, y trabajamos en base del campo relacionado para construirlos:
             "autor_id": val_select_autor,
             "descripcion": self.descripcion_input.value,
             "isbn": self.isbn_input.value,
-            "genero": val_select_gen_list,
+            "genero": gen_selec,
             "lenguaje_id": val_select_len
         }
 

@@ -248,6 +248,7 @@ async def main(pagina: ft.Page):
             )
 
         if pagina.route == "/create_crud_libro":
+            #Tenemos que crear una instancia de la clase CrearLibro, porque la usaremos diferidamente con su método personalizado, laVista_se_montara(), en el método de ciclo de vida de la vista, vista.on_will_mount:
             libro_nuevo=CrearLibro(pagina, sesion)
 
             vista=ft.View(
