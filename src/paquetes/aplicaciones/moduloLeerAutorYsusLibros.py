@@ -12,8 +12,6 @@ class ConsultarAutorYsusLibros(ft.Column):
         self.sesion = sesion
         self.listaFiltrada = []
         self.listaTodosLosTitulosYsusCampos = []
-    
-    def build(self):
         self.menuAutores = ft.Dropdown(
             editable=True,                            
             width=220,
@@ -21,7 +19,9 @@ class ConsultarAutorYsusLibros(ft.Column):
             options=[],
             on_select=self.actualizarMenuLibrosDelAutor,
             )
-
+    
+    def build(self):
+        self.menuAutores
         self.menuLibrosDelAutor = ft.Dropdown(
             editable=False,                            
             width=220,
@@ -33,25 +33,28 @@ class ConsultarAutorYsusLibros(ft.Column):
         self.tablaLibrosDelAutorSelec = DataTable1()
         self.tablaLibrosDelAutorSelec_2 = DataTable1()
 
-        self.btn_cargar = ft.Button("Cargar Datos", on_click=self.botonConsumirEndPoint)
+        #self.btn_cargar = ft.Button("Cargar Datos", on_click=self.botonConsumirEndPoint)
 
         #Finalmente agregamos los controles a la columma (recuerde que este objeto es una herencia de ft.Column):
         self.controls = [
-            self.btn_cargar,
+            #self.btn_cargar,
             ft.Row(controls=[self.menuAutores, self.menuLibrosDelAutor]),
             ft.Button("Borrar", on_click=self.botonBorrarClickeado), 
             self.tablaLibrosDelAutorSelec,
             self.tablaLibrosDelAutorSelec_2,
         ]
 
-    async def botonConsumirEndPoint(self, e):
+    async def laVista_se_montara(self):
+        await self.cargarAutores()
+
+    async def cargarAutores(self):
         try:
             async with httpx.AsyncClient(headers={"Authorization": f"Bearer {self.sesion.tokenAcceso}"}) as client:
                 respuesta = await client.get(url_api)     
 
             diccionario = respuesta.json() #Analiza el cuerpo de la respuesta como JSON y devuelve un diccionario o lista de Python.
             
-            #Tomamos el primer elemento de results que es una lista de diccionarios que representan los registros del modelo-tabla:
+            #Tomamos el primer elemento de results que es una lista de diccionarios que representan los registros del modelo-tabla, para este caso, autores:
             listDeDicts = diccionario['results']
 
         except Exception as error:
@@ -77,7 +80,7 @@ class ConsultarAutorYsusLibros(ft.Column):
             ]
 
             self.menuAutores.options = dropdown_options_autores   
-            self.menuAutores.update() 
+            #self.menuAutores.update() 
 
     #Método para actualizar el menú de los libros del autor seleccionado:
     async def actualizarMenuLibrosDelAutor(self, e):

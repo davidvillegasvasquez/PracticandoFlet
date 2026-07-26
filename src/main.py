@@ -185,15 +185,15 @@ async def main(pagina: ft.Page):
             )
 
         if pagina.route == "/read_crud":
-            pagina.views.append(
-                ft.View(
-                    route="/read_crud",
+            consultaAutorYsusLibros=ConsultarAutorYsusLibros(pagina, sesion)
+            vista=ft.View(
+                    route="/create_crud_libro",
                     controls=[
                         ft.SafeArea(
                             content=ft.Column(
                                 controls=[
                                     ft.AppBar(
-                                        title=ft.Text("Operacion read/crud, Autor y sus libros", expand=True),
+                                        title=ft.Text("Operación r/crud read o retrieve autor y sus libros", expand=True),
                                         bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
                                         leading=ft.IconButton(
                                             ft.Icons.MENU, on_click=mostrar_cajonNav
@@ -206,20 +206,33 @@ async def main(pagina: ft.Page):
                                             )
                                         ]
                                     ),
-                                    ConsultarAutorYsusLibros(pagina, sesion),
+                                    consultaAutorYsusLibros,
                                     ft.Button(
                                         "Ir a crear autor",
                                         on_click=lambda _: asyncio.create_task(
                                             pagina.push_route("/create_crud_autor")
-                                        ),
-                                    ),
+                                            )
+                                    ), 
+                                    #Botón comodín invisibilizado que simula su pulsación con vista.on_will_mount al cargar esta vista. 
+#Todo esto porque las clases python no aceptan contructores asíncronos:                                    
+                                    ft.Button(
+                                        "Botón comodín",
+                                        on_click=await consultaAutorYsusLibros.cargarAutores(),
+                                        visible=False
+                                    ),                                                                     
                                 ]
                             )
                         )
                     ],
+                    scroll=ft.ScrollMode.AUTO,
                     drawer=crear_cajonNav(indice_seleccionado=2),
                 )
-            )
+
+            # Asignamos el evento de ciclo de vida de la vista
+            vista.on_will_mount = await consultaAutorYsusLibros.laVista_se_montara()
+            #Finalmente es que agregamos a la pila de navegación. Todo por la asíncronía que requiere mostrar controles precargados:
+            pagina.views.append(vista)
+            pagina.update()        
 
         if pagina.route == "/create_crud_autor":
             pagina.views.append(
