@@ -51,7 +51,7 @@ class ConsultarAutorYsusLibros(ft.Column):
 
             diccionario = respuesta.json() #Analiza el cuerpo de la respuesta como JSON y devuelve un diccionario o lista de Python.
             
-            #Tomamos el primer elemento de results que es una lista de diccionarios:
+            #Tomamos el primer elemento de results que es una lista de diccionarios que representan los registros del modelo-tabla:
             listDeDicts = diccionario['results']
 
         except Exception as error:
@@ -64,8 +64,8 @@ class ConsultarAutorYsusLibros(ft.Column):
             ))
 
         else: 
-            #Filtramos listDeDicts para extraer los campos deseados de cada uno de los diccionarios que contienen los datos del autor:
-            self.listaFiltrada = [{"id": d["id"], "nombre": d["nombre"], "apellido": d["apellido"], "libros": d["libros"]} for d in listDeDicts]
+            #Filtramos listDeDicts para extraer los campos deseados de cada uno de los diccionarios que contienen los datos del autor. Recuerde que librosx es el related_name arbitrario que definimos en el campo autor del modelo Libro:
+            self.listaFiltrada = [{"id": d["id"], "nombre": d["nombre"], "apellido": d["apellido"], "librosquis": d["librosx"]} for d in listDeDicts]
 
             #Así convertimos una lista de diccionarios a una lista de ft.dropdown.Option en su carga inicial y definitiva:
             dropdown_options_autores = [
@@ -86,8 +86,8 @@ class ConsultarAutorYsusLibros(ft.Column):
         # Extraemos el diccionario que expresa el registro del autor:
         dictAutor = next((autor for autor in self.listaFiltrada if autor['id'] == autor_seleccionado), None)
 
-        #Extraemos la lista de sus libros contenido en el campo 'libros' de dictAutor y que están en forma de hipervínculos:
-        susLibros = dictAutor['libros']
+        #Extraemos la lista de sus libros contenido en el campo 'librosquis' de dictAutor y que están en forma de hipervínculos:
+        susLibros = dictAutor['librosquis']
 
         #Para obtener los títulos de los libros a partir de sus hipervínculos:
         listaDeTitulos=[] #Solo el título para el dropdown de los libros (títulos)

@@ -32,6 +32,9 @@ async def main(pagina: ft.Page):
             await pagina.push_route("/create_crud_libro")
 
         elif e.control.selected_index == 5:
+            await pagina.push_route("/patch_crud_libro")
+
+        elif e.control.selected_index == 6:
             await pagina.push_route("/calculadora")
 
     def crear_cajonNav(indice_seleccionado=0):
@@ -77,6 +80,13 @@ async def main(pagina: ft.Page):
                 ),
                 ft.Divider(thickness=2),
                 ft.NavigationDrawerDestination(
+                    label="Operación patch/crud, modificar(update) libro",
+                    icon=ft.Icon(ft.Icons.STORE_OUTLINED),
+                    selected_icon=ft.Icon(ft.Icons.STORE),
+                    disabled=True if (sesion is None or sesion.tokenAcceso is None) else False
+                ),
+                ft.Divider(thickness=2),
+                ft.NavigationDrawerDestination(
                     label="Calculadora",
                     icon=ft.Icon(ft.Icons.PHONE_OUTLINED),
                     selected_icon=ft.Icons.PHONE,
@@ -99,6 +109,7 @@ async def main(pagina: ft.Page):
         pagina.update()
 
     def logout(e):
+        #Por definir.
         pass
     
     #Definimos los controles que se usaran a nivel del main para poder funcionar:
@@ -234,7 +245,7 @@ async def main(pagina: ft.Page):
                                     ),
                                     CrearAutor(pagina, sesion),
                                     ft.Button(
-                                        "Ir a calculadora",
+                                        "Ir a crear libro",
                                         on_click=lambda _: asyncio.create_task(
                                             pagina.push_route("/create_crud_libro")
                                         ),
@@ -273,15 +284,15 @@ async def main(pagina: ft.Page):
                                     ),
                                     libro_nuevo,
                                     ft.Button(
-                                        "Ir a calculadora",
+                                        "Ir a update libro",
                                         on_click=lambda _: asyncio.create_task(
-                                            pagina.push_route("/calculadora")
+                                            pagina.push_route("/patch_crud_libro")
                                             )
                                     ), 
-                                    #Botón comodin invisibilizado que simula su pulsación con vista.on_will_mount al cargar esta vista. 
+                                    #Botón comodín invisibilizado que simula su pulsación con vista.on_will_mount al cargar esta vista. 
 #Todo esto porque las clases python no aceptan contructores asíncronos:                                    
                                     ft.Button(
-                                        "Actualizar datos",
+                                        "Botón comodín",
                                         on_click=await libro_nuevo.cargarAutoresGenerosYlenguajes(),
                                         visible=False
                                     ),                                                                     
@@ -295,6 +306,58 @@ async def main(pagina: ft.Page):
 
             # Asignamos el evento de ciclo de vida de la vista
             vista.on_will_mount = await libro_nuevo.laVista_se_montara()
+            #Finalmente es que agregamos a la pila de navegación. Todo por la asíncronía que requiere mostrar controles precargados:
+            pagina.views.append(vista)
+            pagina.update()
+
+        if pagina.route == "/patch_crud_libro":
+            #Tenemos que crear una instancia de la clase CrearLibro, porque la usaremos diferidamente con su método personalizado, laVista_se_montara(), en el método de ciclo de vida de la vista, vista.on_will_mount:
+            #libro_actualizado=PatchLibro(pagina, sesion)
+
+            vista=ft.View(
+                    route="/patch_crud_libro",
+                    controls=[
+                        ft.SafeArea(
+                            content=ft.Column(
+                                controls=[
+                                    ft.AppBar(
+                                        title=ft.Text("Operación update/crud, en este caso parchear (patch) libro", expand=True),
+                                        bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
+                                        leading=ft.IconButton(
+                                            ft.Icons.MENU, on_click=mostrar_cajonNav
+                                        ),
+                                        automatically_imply_leading=False,
+                                        actions=[
+                                            ft.Text(
+                                                f'usuario:{sesion.usuario}',
+                                                visible=True if sesion.tokenAcceso is not None else False
+                                            )
+                                        ]
+                                    ),
+                                    #libro_actualizado,
+                                    ft.Button(
+                                        "Ir a calculadora",
+                                        on_click=lambda _: asyncio.create_task(
+                                            pagina.push_route("/calculadora")
+                                            )
+                                    ), 
+                                    #Botón comodin invisibilizado que simula su pulsación con vista.on_will_mount al cargar esta vista. 
+#Todo esto porque las clases python no aceptan contructores asíncronos:                                
+                                    ft.Button(
+                                        "Botón comodín",
+                                        #on_click=await libro_nuevo.cargarAutoresGenerosYlenguajes(),
+                                        visible=False
+                                    ),                                                                     
+                                ]
+                            )
+                        )
+                    ],
+                    scroll=ft.ScrollMode.AUTO,
+                    drawer=crear_cajonNav(indice_seleccionado=5),
+                )
+
+            # Asignamos el evento de ciclo de vida de la vista
+            #vista.on_will_mount = await libro_nuevo.laVista_se_montara()
             #Finalmente es que agregamos a la pila de navegación. Todo por la asíncronía que requiere mostrar controles precargados:
             pagina.views.append(vista)
             pagina.update()      
@@ -332,7 +395,7 @@ async def main(pagina: ft.Page):
                             )
                         )
                     ],
-                    drawer=crear_cajonNav(indice_seleccionado=5),
+                    drawer=crear_cajonNav(indice_seleccionado=6),
                 )
             )
         pagina.update()

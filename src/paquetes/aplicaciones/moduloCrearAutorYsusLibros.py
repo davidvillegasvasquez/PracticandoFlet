@@ -62,7 +62,8 @@ class CrearLibro(ft.Column):
         super().__init__()
         self.pag = pagina
         self.sesion = sesion
-        #En un modelo asíncrono, si quieres ver los controles precargados con datos de los endpoints al navegar a la vista, debes inicializarlos primero en el constructor y no en el método build:
+        #En un modelo asíncrono, si quieres ver los controles que deben ser precargados con datos de los endpoints al navegar a la vista, en nuestro caso
+#menuAutores, menuGenero y menuLenguajes, debes inicializarlos primero aquí en el constructor y no en el método build. Esto para poder habilitar la acción de previsualización en main con el atributo de vista, on_will_mount:
         self.menuAutores = ft.Dropdown(
             editable=True,                            
             width=220,
@@ -82,13 +83,13 @@ class CrearLibro(ft.Column):
             )
     
     def build(self):
-        #Declaración de los controles que deben mostrarse precarcados al ir a la vista:
+        #Dibujo de los controles que deben mostrarse precarcados al ir a la vista:
         self.menuAutores
         self.menuGeneros 
         self.menuLenguajes
 
         self.titulo_input = ft.TextField(label="Nombre")
-        #Configuración de un TextField para textos largos. Comienza con 3 lineas visible, a la 6 para comenzar hacer scroll:
+        #Configuración de un TextField para textos largos. Comienza con 3 lineas visible, a la 6ta para comenzar hacer scroll:
         self.descripcion_input = ft.TextField(label="Descripción", multiline=True, min_lines=3, max_lines=5)
         self.isbn_input = ft.TextField(label="Isbn")
         self.resultado_texto = ft.Text()
@@ -100,7 +101,7 @@ class CrearLibro(ft.Column):
             self.isbn_input,
             ft.Container(
                 height=100, # Define el área visible para forzar scroll
-                width=250, # Espacio entre elementos
+                width=250,
                 padding=10,
                 border=ft.Border.all(1, ft.Colors.BLACK),
                 border_radius=ft.BorderRadius.all(value=5),
@@ -111,7 +112,7 @@ class CrearLibro(ft.Column):
             self.resultado_texto,
         ]
 
-    #Método para ejecutar desde main con el atributo método de los objetos ft.View, on_will_mount (vista.on_will_mount):
+    #Método para ser ejecutado asíncronamente desde main con el atributo método de los objetos ft.View, on_will_mount (vista.on_will_mount) para poder precargar los controles que lo requieren:
     async def laVista_se_montara(self):
         await self.cargarAutoresGenerosYlenguajes()
       
@@ -140,7 +141,8 @@ class CrearLibro(ft.Column):
             ))
 
         else: 
-            #Filtramos listDeDictsAutores para extraer los campos deseados (id y nombre) de cada uno de los diccionarios que contienen los datos del autor. Los otros dos no necesitan ser filtrados porque sólo tinen id y nombre:
+            #Filtramos listDeDictsAutores para extraer los campos deseados (id y nombre) de cada uno de los diccionarios (registros-filas) que contienen los
+#datos del autor. Los otros dos no necesitan ser filtrados porque sólo tinen id y nombre:
             listDeDictFiltAutores = [{"id": d["id"], "nombre": d["nombre"], "apellido": d["apellido"]} for d in listDeDictsAutores]
 
             #Hacemos los dropdowns:
@@ -153,16 +155,16 @@ class CrearLibro(ft.Column):
             ]
             self.menuAutores.options = dropdown_options_autores 
 
-            #Para genero hacemo una lista de checkboxs porque no existe un dropdown de selección múltiple:          
+            #Para genero hacemos una lista por comprensión, de checkboxs con los generos para colocarlos como los controles del listview menuGeneros, porque no existe un dropdown de selección múltiple:          
             self.menuGeneros.controls = [
                 ft.Checkbox(
-                    label=task["nombre"],
+                    label=genero["nombre"],
                     value=False,
-                    # Attaching a full dictionary to the data attribute
-                    data=task["id"],
-                    on_change="" #on_task_toggle
+                    #Adjuntamos el dato de usuario en el atributo data:
+                    data=genero["id"],
+                    #on_change=""
                 ) 
-                for task in listDeDictsGeneros
+                for genero in listDeDictsGeneros
             ]          
 
             dropdown_options_lenguajes = [
@@ -175,7 +177,6 @@ class CrearLibro(ft.Column):
             self.menuLenguajes.options = dropdown_options_lenguajes
             #No actualizamos los controles aquí porque no se han conformado aún por la asíncronía que implica el view_will_mount que lo 
 #ejecutaremos desde su cliente, main, con el atributo de la clase View flet, on_will_mount. Todo esto porque no se puede ejecutar métodos asíncronos desde el constructor:
-
             #self.menuAutores.update()
             #self.menuGeneros.update()
             #self.menuLenguajes.update()
@@ -184,9 +185,9 @@ class CrearLibro(ft.Column):
         self.resultado_texto.value = "Enviando datos..."
         self.pag.update()
 
-        #Lamentablemente tenemos que hacer el trabajon de ubicar y extraer los valores seleccionados en los menus dropdown y la lista de checkboxs. No existe una forma directa como si fuera una lista o dict:
+        #Lamentablemente tenemos que hacer el trabajon de ubicar y extraer los valores seleccionados en los menus dropdown y la lista de checkboxs. No existe una forma directa como si estos controles se comportaran como lista o dicts:
         
-        #Recuerde que self.menuAutores.value es un str que representa el id, y key=autor["id"] en este caso guarda un entero, por lo cual tenemos que convertirlo a entero para poder compararlos en su busqueda posterior. Lo mismo aplica a lenguaje:
+        #Recuerde que self.menuAutores.value es un str que en este caso representa el id, dicho id viene de key=autor["id"] en este un entero, por lo cual tenemos que convertirlo a entero para poder compararlos en su busqueda posterior. Lo mismo aplica a lenguaje:
 
         if self.menuAutores.value is not None:
             val_select_autor = int(self.menuAutores.value)
@@ -199,9 +200,9 @@ class CrearLibro(ft.Column):
             ))
             return #Forzamos la finalización del método.
 
-        #Por comprensión de listas creamos la lista de generos seleccionados:
+        #Por comprensión de listas creamos la lista de ids de los generos seleccionados que fue guardado en su atributo data:
         gen_selec=[
-            cb.data for cb in self.menuGeneros.controls if cb.value
+            checkbox.data for checkbox in self.menuGeneros.controls if checkbox.value
         ]
         if gen_selec: #Lista no vacía, el usuario seleccionó al menos un genero.
             pass
@@ -235,10 +236,11 @@ class CrearLibro(ft.Column):
         #Procedemos a contruir la payload o cuerpo (body) de la petición o solicitud:
         datos = {
             "titulo": self.titulo_input.value,
-            #Debemos usar el patron modelo_id en los campos con relaciones foreingkey, porque vamos a construir urls con serializadores hipervinculados, y trabajamos en base del campo relacionado para construirlos:
+            #Debemos usar el patron modelo_id para referenciar los campos con relaciones foreingkey del lado uno, porque vamos a construir urls con serializadores hipervinculados:
             "autor_id": val_select_autor,
             "descripcion": self.descripcion_input.value,
             "isbn": self.isbn_input.value,
+            #Aunque genero tiene muchos libros, es una relación ManyToMany con Libro, por ello no se referencia con genero_id:
             "genero": gen_selec,
             "lenguaje_id": val_select_len
         }
@@ -248,6 +250,7 @@ class CrearLibro(ft.Column):
                 response = await client.post(API_URL_libros, json=datos, timeout=10.0)
                 
                 if response.status_code == 201:
+                    #Aqui se debe meter un modal y redirigir a home:
                     self.resultado_texto.value = "Libro creado exitosamente."
                     self.resultado_texto.color = "green"
                     #self.pag.push_route("/")
