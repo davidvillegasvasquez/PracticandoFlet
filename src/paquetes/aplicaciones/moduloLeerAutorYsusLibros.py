@@ -10,9 +10,9 @@ class ConsultarAutorYsusLibros(ft.Column):
         super().__init__()
         self.pag = pagina
         self.sesion = sesion
-        self.listaFiltrada = []
+        self.listaFiltradaAutores = []
         self.listaTodosLosTitulosYsusCampos = []
-        #Tenemos que definir menuAutores en el constructor porque lo usaremos asíncronamente con vista.on_will_mount en su cliente, main:
+        #Tenemos que definir menuAutores aquí en el constructor porque lo usaremos asíncronamente con vista.on_will_mount en su cliente, main, para poder precargarlo con los autores al navegar a esta vista:
         self.menuAutores = ft.Dropdown(
             editable=True,                            
             width=220,
@@ -22,7 +22,6 @@ class ConsultarAutorYsusLibros(ft.Column):
             )
     
     def build(self):
-        self.menuAutores
         self.menuLibrosDelAutor = ft.Dropdown(
             editable=False,                            
             width=220,
@@ -36,7 +35,6 @@ class ConsultarAutorYsusLibros(ft.Column):
 
         #Finalmente agregamos los controles a la columma (recuerde que este objeto es una herencia de ft.Column):
         self.controls = [
-            #self.btn_cargar,
             ft.Row(controls=[self.menuAutores, self.menuLibrosDelAutor]),
             ft.Button("Borrar", on_click=self.botonBorrarClickeado), 
             self.tablaLibrosDelAutorSelec,
@@ -54,7 +52,7 @@ class ConsultarAutorYsusLibros(ft.Column):
             diccionario = respuesta.json() #Analiza el cuerpo de la respuesta como JSON y devuelve un diccionario o lista de Python.
             
             #Tomamos el primer elemento de results que es una lista de diccionarios que representan los registros del modelo-tabla, para este caso, autores:
-            listDeDicts = diccionario['results']
+            listDeDictsAutores = diccionario['results']
 
         except Exception as error:
             
@@ -66,8 +64,8 @@ class ConsultarAutorYsusLibros(ft.Column):
             ))
 
         else: 
-            #Filtramos listDeDicts para extraer los campos deseados de cada uno de los diccionarios que contienen los datos del autor. Recuerde que librosx es el related_name arbitrario que definimos en el campo autor del modelo Libro:
-            self.listaFiltrada = [{"id": d["id"], "nombre": d["nombre"], "apellido": d["apellido"], "librosquis": d["librosx"]} for d in listDeDicts]
+            #Filtramos listDeDictsAutores para extraer los campos deseados de cada uno de los diccionarios que representan los registros de la tabla(modelo) Autor. Recuerde que librosx es el related_name arbitrario que definimos en el campo autor del modelo Libro:
+            self.listaFiltradaAutores = [{"id": d["id"], "nombre": d["nombre"], "apellido": d["apellido"], "librosquis": d["librosx"]} for d in listDeDictsAutores]
 
             #Así convertimos una lista de diccionarios a una lista de ft.dropdown.Option en su carga inicial y definitiva:
             dropdown_options_autores = [
@@ -75,7 +73,7 @@ class ConsultarAutorYsusLibros(ft.Column):
                     key=autor["id"],      # El valor que se obtiene al seleccionar. Recuerde que autor["id"] es un entero y Dropdown.value es un str que deberá convertir a entero para poder compararlos.
                     text=f"{autor['nombre']} {autor['apellido']}" #Así hacemos un atributo text compuesto. 
                 )
-            for autor in self.listaFiltrada
+            for autor in self.listaFiltradaAutores
             ]
 
             self.menuAutores.options = dropdown_options_autores   
@@ -85,10 +83,10 @@ class ConsultarAutorYsusLibros(ft.Column):
     async def actualizarMenuLibrosDelAutor(self, e):
         autor_seleccionado = int(e.control.value) #Tenemos que llevar a entero porque los control.value retornan cadenas, y el id en listaFiltrada está expresada como tipo entero.
         
-        # Extraemos el diccionario que expresa el registro del autor:
-        dictAutor = next((autor for autor in self.listaFiltrada if autor['id'] == autor_seleccionado), None)
+        # Extraemos el diccionario que expresa el registro del autor seleccionado:
+        dictAutor = next((autor for autor in self.listaFiltradaAutores if autor['id'] == autor_seleccionado), None)
 
-        #Extraemos la lista de sus libros contenido en el campo 'librosquis' de dictAutor y que están en forma de hipervínculos:
+        #Extraemos la lista de los títulos de sus libros contenido en el campo 'librosquis' de dictAutor y que están en forma de hipervínculos:
         susLibros = dictAutor['librosquis']
 
         #Para obtener los títulos de los libros a partir de sus hipervínculos:

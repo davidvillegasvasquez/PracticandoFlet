@@ -69,7 +69,6 @@ class CrearLibro(ft.Column):
             width=220,
             label="Autores",
             options=[],
-            #on_select="",
             )
 
         self.menuGeneros=ft.ListView(controls=[], expand=True)

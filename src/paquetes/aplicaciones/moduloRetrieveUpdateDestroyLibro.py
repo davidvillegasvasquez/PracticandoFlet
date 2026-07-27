@@ -10,14 +10,15 @@ class PatchLibro(ft.Column):
         super().__init__()
         self.pag = pagina
         self.sesion = sesion
-        #En un modelo asíncrono, si quieres ver los controles que deben ser precargados con datos de los endpoints al navegar a la vista, en nuestro caso
-#menuAutores, menuGenero y menuLenguajes, debes inicializarlos primero aquí en el constructor y no en el método build. Esto para poder habilitar la acción de previsualización en main con el atributo de vista, on_will_mount:
+        #En un modelo asíncrono, los controles que deben ser precargados con datos de los endpoints al navegar a su vista, en nuestro caso
+#menuAutores, menuGenero y menuLenguajes, debes inicializarlos primero aquí en el
+#constructor y no en el método build. Esto para poder habilitar la acción de previsualización en main con el atributo de vista, on_will_mount cuando se cargue la vista al navegar hacia ella:
         self.menuLibros = ft.Dropdown(
             editable=True,                            
             width=220,
             label="Libros",
             options=[],
-            on_select="",
+            on_select=self.rellenarCamposLibroSelec
             )
     
     def build(self):
@@ -61,8 +62,7 @@ class PatchLibro(ft.Column):
                 respuestaLibros = await client.get(API_URL_libros)     
 
             diccionarioLibros = respuestaLibros.json()
-            listDeDictsLibros = diccionarioLibros['results']
-            print(f"listDeDictsLibros = {listDeDictsLibros}")
+            self.listDeDictsLibros = diccionarioLibros['results']
 
         except Exception as error:
             
@@ -79,9 +79,51 @@ class PatchLibro(ft.Column):
                     key=libro["id"], 
                     text=libro['titulo'] 
                 )
-            for libro in listDeDictsLibros
+            for libro in self.listDeDictsLibros
             ]
             self.menuLibros.options = dropdown_options_libros
+
+    async def rellenarCamposLibroSelec(self, e):
+        libro_seleccionado = int(e.control.value) #Tenemos que llevar a entero porque los control.value retornan cadenas, y el id en listaFiltrada está expresada como tipo entero.
+        
+        # Extraemos el diccionario que expresa el registro del libro seleccionado entre todos los registros-diccionarios contenidos en self.listDeDictsLibros:
+        dictLibroSelec = next((libro for libro in self.listDeDictsLibros if libro['id'] == libro_seleccionado), None)
+
+        #Primero extraémos los campos del diccionario-registro que son hipervínculos (autor, lenguaje y generos):
+
+        try:
+            async with httpx.AsyncClient(headers={"Authorization": f"Bearer {self.sesion.tokenAcceso}"}) as client:
+                respuestaAutor = await client.get(dictLibroSelec['autor']) 
+                respuestaLenguaje = await client.get(dictLibroSelec['lenguaje'])
+                #respuestaGeneros = await client.get(dictLibroSelec['genero'])
+
+            dictAutorSelec = respuestaAutor.json() #Analiza el cuerpo de la respuesta como JSON y devuelve un diccionario o lista de Python.
+            dictLenguajeSelec = respuestaLenguaje.json()
+            #dictGenerosSelec = respuestaGeneros.json()
+            #Tomamos el primer elemento de results que es una lista de diccionarios que representan los registros del modelo-tabla, para este caso, autores:
+            #listDeDictsAutores = diccionario['results']
+            print(f"dictAutorSelec = {dictAutorSelec}")
+            print(f"dictLenguajeSelec = {dictLenguajeSelec}")
+            #print(f"dictGenerosSelec = {dictGenerosSelec}")
+
+        except Exception as error:
+            
+            self.pag.show_dialog(ft.AlertDialog(
+                title=ft.Text("Ocurrió un error..."),
+                content=ft.Text(f'Error: {error}'),
+                actions=[ft.TextButton("Cerrar", on_click=lambda e: self.pag.pop_dialog())],
+                modal=True
+            ))
+
+        else: 
+            self.pag.update()
+            #Filtramos
+
+        #Extraemos el resto de campos del diccionario que expresa el registro del libro seleccionado que no son hipervinculos, y se lo asignamos directamente a los controles de la vista:
+        #self.titulo_input.value = dictLibroSelec['titulo']
+
+
+        
         
     async def botonPatchLibro(self, e):
         self.resultado_texto.value = "Enviando datos..."
