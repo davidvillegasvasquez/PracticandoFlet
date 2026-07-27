@@ -69,7 +69,7 @@ class CrearLibro(ft.Column):
             width=220,
             label="Autores",
             options=[],
-            on_select="",
+            #on_select="",
             )
 
         self.menuGeneros=ft.ListView(controls=[], expand=True)
@@ -79,14 +79,15 @@ class CrearLibro(ft.Column):
             width=220,
             label="Lenguaje",
             options=[],
-            on_select="",
+            #on_select="",
             )
     
     def build(self):
-        #Dibujo de los controles que deben mostrarse precarcados al ir a la vista:
-        self.menuAutores
-        self.menuGeneros 
-        self.menuLenguajes
+        #Dibujo de los controles que deben mostrarse precarcados al ir a la vista. Los que se definieron en el constructor no es necesario colocarlos en el
+#cuerpo del build, pués en ese caso serán objetos literales sueltos. Sólo hay que colocarlos en el atributo controls.
+        #self.menuAutores
+        #self.menuGeneros 
+        #self.menuLenguajes
 
         self.titulo_input = ft.TextField(label="Nombre")
         #Configuración de un TextField para textos largos. Comienza con 3 lineas visible, a la 6ta para comenzar hacer scroll:
@@ -253,6 +254,7 @@ class CrearLibro(ft.Column):
                     #Aqui se debe meter un modal y redirigir a home:
                     self.resultado_texto.value = "Libro creado exitosamente."
                     self.resultado_texto.color = "green"
+                    #Sustituir resultado_texto por un modal.
                     #self.pag.push_route("/")
                 else:
                     self.resultado_texto.value = f"Error {response.status_code}: {response.text}"

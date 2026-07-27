@@ -6,6 +6,7 @@ from paquetes.aplicaciones.calculadora import AppCalculadora
 from paquetes.logicas.apis import SesionJWT
 from paquetes.aplicaciones.moduloLeerAutorYsusLibros import ConsultarAutorYsusLibros
 from paquetes.aplicaciones.moduloCrearAutorYsusLibros import CrearAutor, CrearLibro
+from paquetes.aplicaciones.moduloRetrieveUpdateDestroyLibro import PatchLibro
 
 sesion = None
 
@@ -324,9 +325,8 @@ async def main(pagina: ft.Page):
             pagina.update()
 
         if pagina.route == "/patch_crud_libro":
-            #Tenemos que crear una instancia de la clase CrearLibro, porque la usaremos diferidamente con su método personalizado, laVista_se_montara(), en el método de ciclo de vida de la vista, vista.on_will_mount:
-            #libro_actualizado=PatchLibro(pagina, sesion)
-
+            #Creamos la instancia con identificador porque la utilizaremos posteriormente en vista.on_will_mount:
+            libro_actualizado=PatchLibro(pagina, sesion)
             vista=ft.View(
                     route="/patch_crud_libro",
                     controls=[
@@ -347,18 +347,16 @@ async def main(pagina: ft.Page):
                                             )
                                         ]
                                     ),
-                                    #libro_actualizado,
+                                    libro_actualizado,
                                     ft.Button(
                                         "Ir a calculadora",
                                         on_click=lambda _: asyncio.create_task(
                                             pagina.push_route("/calculadora")
                                             )
-                                    ), 
-                                    #Botón comodin invisibilizado que simula su pulsación con vista.on_will_mount al cargar esta vista. 
-#Todo esto porque las clases python no aceptan contructores asíncronos:                                
+                                    ),                              
                                     ft.Button(
                                         "Botón comodín",
-                                        #on_click=await libro_nuevo.cargarAutoresGenerosYlenguajes(),
+                                        on_click=await libro_actualizado.cargarLibros(),
                                         visible=False
                                     ),                                                                     
                                 ]
@@ -370,8 +368,7 @@ async def main(pagina: ft.Page):
                 )
 
             # Asignamos el evento de ciclo de vida de la vista
-            #vista.on_will_mount = await libro_nuevo.laVista_se_montara()
-            #Finalmente es que agregamos a la pila de navegación. Todo por la asíncronía que requiere mostrar controles precargados:
+            vista.on_will_mount = await libro_actualizado.laVista_se_montara()
             pagina.views.append(vista)
             pagina.update()      
      

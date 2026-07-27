@@ -12,6 +12,7 @@ class ConsultarAutorYsusLibros(ft.Column):
         self.sesion = sesion
         self.listaFiltrada = []
         self.listaTodosLosTitulosYsusCampos = []
+        #Tenemos que definir menuAutores en el constructor porque lo usaremos asíncronamente con vista.on_will_mount en su cliente, main:
         self.menuAutores = ft.Dropdown(
             editable=True,                            
             width=220,
@@ -32,8 +33,6 @@ class ConsultarAutorYsusLibros(ft.Column):
                       
         self.tablaLibrosDelAutorSelec = DataTable1()
         self.tablaLibrosDelAutorSelec_2 = DataTable1()
-
-        #self.btn_cargar = ft.Button("Cargar Datos", on_click=self.botonConsumirEndPoint)
 
         #Finalmente agregamos los controles a la columma (recuerde que este objeto es una herencia de ft.Column):
         self.controls = [
