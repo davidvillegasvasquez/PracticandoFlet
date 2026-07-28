@@ -325,7 +325,7 @@ async def main(pagina: ft.Page):
             pagina.update()
 
         if pagina.route == "/patch_crud_libro":
-            #Creamos la instancia con identificador porque la utilizaremos posteriormente en vista.on_will_mount:
+            #Creamos la instancia con identificador y no como una instancia literal porque la utilizaremos posteriormente en vista.on_will_mount para poder ver la lista de libros precarga en su dropdown al nevegar a esta vista:
             libro_actualizado=PatchLibro(pagina, sesion)
             vista=ft.View(
                     route="/patch_crud_libro",

@@ -12,7 +12,7 @@ class PatchLibro(ft.Column):
         self.sesion = sesion
         #En un modelo asíncrono, los controles que deben ser precargados con datos de los endpoints al navegar a su vista, en nuestro caso
 #menuAutores, menuGenero y menuLenguajes, debes inicializarlos primero aquí en el
-#constructor y no en el método build. Esto para poder habilitar la acción de previsualización en main con el atributo de vista, on_will_mount cuando se cargue la vista al navegar hacia ella:
+#constructor y no en el método build. Esto para poder habilitar la acción de previsualización de sus dropdown en main con el atributo de vista, on_will_mount cuando se cargue la vista al navegar hacia ella:
         self.menuLibros = ft.Dropdown(
             editable=True,                            
             width=220,
@@ -87,6 +87,8 @@ class PatchLibro(ft.Column):
         libro_seleccionado = int(e.control.value) #Tenemos que llevar a entero porque los control.value retornan cadenas, y el id en listaFiltrada está expresada como tipo entero.
         
         # Extraemos el diccionario que expresa el registro del libro seleccionado entre todos los registros-diccionarios contenidos en self.listDeDictsLibros:
+#Será uno así: {'url': 'http://127.0.0.1:8000/catalogo/apirest/libros/4/', 'id': 4, 'titulo': 'Canaima', 'autor': 'http://127.0.0.1:8000/catalogo/apirest/autores/2/', 'descripcion': 'Canaima es una novela ...', 'isbn': '9798886451740', 'genero': ['http://127.0.0.1:8000/catalogo/apirest/generos/1/'], 'lenguaje': 'http://127.0.0.1:8000/catalogo/apirest/lenguajes/1/'}
+
         dictLibroSelec = next((libro for libro in self.listDeDictsLibros if libro['id'] == libro_seleccionado), None)
 
         #Primero extraémos los campos del diccionario-registro que son hipervínculos (autor, lenguaje y generos):
@@ -95,16 +97,21 @@ class PatchLibro(ft.Column):
             async with httpx.AsyncClient(headers={"Authorization": f"Bearer {self.sesion.tokenAcceso}"}) as client:
                 respuestaAutor = await client.get(dictLibroSelec['autor']) 
                 respuestaLenguaje = await client.get(dictLibroSelec['lenguaje'])
-                #respuestaGeneros = await client.get(dictLibroSelec['genero'])
+                #dictLibroSelec ['genero'] es una lista de urls, por lo cual debemos iterar sobre ellas y extraer los dict que devuelven esas urls:
+                listaDictsGenerosSelec = []
+                for url in dictLibroSelec ['genero']:
+                    respuestaGeneros = await client.get(url)
+                    listaDictsGenerosSelec.append(respuestaGeneros.json())
 
-            dictAutorSelec = respuestaAutor.json() #Analiza el cuerpo de la respuesta como JSON y devuelve un diccionario o lista de Python.
+            dictAutorSelec = respuestaAutor.json() 
             dictLenguajeSelec = respuestaLenguaje.json()
-            #dictGenerosSelec = respuestaGeneros.json()
-            #Tomamos el primer elemento de results que es una lista de diccionarios que representan los registros del modelo-tabla, para este caso, autores:
-            #listDeDictsAutores = diccionario['results']
+
+            print('======================================')
             print(f"dictAutorSelec = {dictAutorSelec}")
+            print('--------------------------------------')
             print(f"dictLenguajeSelec = {dictLenguajeSelec}")
-            #print(f"dictGenerosSelec = {dictGenerosSelec}")
+            print('--------------------------------------')
+            print(f"listaDictsGenerosSelec = {listaDictsGenerosSelec}")
 
         except Exception as error:
             
