@@ -3,7 +3,7 @@ import asyncio
 import httpx
 
 API_URL_libros = "http://127.0.0.1:8000/catalogo/apirest/libros/"
-API_URL_libro = "http://127.0.0.1:8000/catalogo/apirest/libros/<int:pk>/"
+API_URL_generos = "http://127.0.0.1:8000/catalogo/apirest/generos/"
 
 class PatchLibro(ft.Column):
     def __init__(self, pagina, sesion):
@@ -20,11 +20,13 @@ class PatchLibro(ft.Column):
             options=[],
             on_select=self.rellenarCamposLibroSelec
             )
+        #Creamos el atributo generos, una lista de diccionarios para tener todos los generos al cargar que mostraremos como checkboxs, y expresamos los de un libro en particular como checkboxs marcados:
+        self.generos = []
     
     def build(self):
         #Dibujo de los controles que deben mostrarse precarcados al ir a la vista:
         self.menuGeneros=ft.ListView(controls=[], expand=True)
-        self.titulo_input = ft.TextField(label="Título")
+        #self.titulo_input = ft.TextField(label="Título")
         self.autor_input = ft.TextField(label="Autor")
         #Configuración de un TextField para textos largos. Comienza con 3 lineas visible, a la 6ta para comenzar hacer scroll:
         self.descripcion_input = ft.TextField(label="Descripción", multiline=True, min_lines=3, max_lines=5)
@@ -35,7 +37,6 @@ class PatchLibro(ft.Column):
 
         self.controls = [
             self.menuLibros,
-            self.titulo_input,
             self.autor_input,
             self.descripcion_input,
             self.isbn_input,
@@ -59,10 +60,16 @@ class PatchLibro(ft.Column):
     async def cargarLibros(self):
         try:
             async with httpx.AsyncClient(headers={"Authorization": f"Bearer {self.sesion.tokenAcceso}"}) as client:
-                respuestaLibros = await client.get(API_URL_libros)     
+                respuestaLibros = await client.get(API_URL_libros) 
+                #Obtenemos aquí la lista de todos los generos para no cargar tanto el método rellenarCamposLibroSelec, además que es una sola lista de valores fijo, como la de Libros:  
+                respuestaGeneros = await client.get(API_URL_generos)
 
+            #Rellenamos con lo valores consultados:
             diccionarioLibros = respuestaLibros.json()
+            diccionarioGeneros = respuestaGeneros.json()
+            
             self.listDeDictsLibros = diccionarioLibros['results']
+            self.generos = diccionarioGeneros['results']
 
         except Exception as error:
             
@@ -97,21 +104,17 @@ class PatchLibro(ft.Column):
             async with httpx.AsyncClient(headers={"Authorization": f"Bearer {self.sesion.tokenAcceso}"}) as client:
                 respuestaAutor = await client.get(dictLibroSelec['autor']) 
                 respuestaLenguaje = await client.get(dictLibroSelec['lenguaje'])
-                #dictLibroSelec ['genero'] es una lista de urls, por lo cual debemos iterar sobre ellas y extraer los dict que devuelven esas urls:
-                listaDictsGenerosSelec = []
-                for url in dictLibroSelec ['genero']:
+                #dictLibroSelec['genero'] es una lista de urls, por lo cual debemos iterar sobre ellas y extraer los dict que devuelven esas urls:
+                listaIdsGenerosSelec = []
+                for url in dictLibroSelec['genero']:
                     respuestaGeneros = await client.get(url)
-                    listaDictsGenerosSelec.append(respuestaGeneros.json())
+                    #Recuerde que respuestaGeneros.json() es el diccionario del genero devuelto en la solicitud, de modo que extraemos su id para almacenaro en
+#atributo data del checkbox correspondiente para darle value=True en la lista de de checkbox generos en el listview self.menuGeneros:
+                    listaIdsGenerosSelec.append(respuestaGeneros.json()['id'])
 
             dictAutorSelec = respuestaAutor.json() 
             dictLenguajeSelec = respuestaLenguaje.json()
-
-            print('======================================')
-            print(f"dictAutorSelec = {dictAutorSelec}")
-            print('--------------------------------------')
-            print(f"dictLenguajeSelec = {dictLenguajeSelec}")
-            print('--------------------------------------')
-            print(f"listaDictsGenerosSelec = {listaDictsGenerosSelec}")
+            print(f'listaIdsGenerosSelec = {listaIdsGenerosSelec}')
 
         except Exception as error:
             
@@ -123,14 +126,20 @@ class PatchLibro(ft.Column):
             ))
 
         else: 
+            #La lista de generos tenemos que convertirla en una lista de controles checkboxs para meterlas en el atributo controls del listview, self.menuGeneros:
+            """
+            listCheckboxGeneros = []
+            for genero in listaDictsGenerosSelec:
+                ft.CheckBox 
+            #Extraemos el resto de campos del diccionario que expresa el registro del libro seleccionado que no son hipervinculos, y se lo asignamos directamente a los controles de la vista:
+            self.autor_input.value = f"{dictAutorSelec['nombre']} {dictAutorSelec['apellido']}"
+            self.descripcion_input.value = dictLibroSelec['descripcion']
+            self.isbn_input.value = dictLibroSelec['isbn']
+            self.lenguaje_input.value = dictLibroSelec['lenguaje']
+            self.menuGeneros.controls = listCheckboxGeneros
+            """
             self.pag.update()
-            #Filtramos
 
-        #Extraemos el resto de campos del diccionario que expresa el registro del libro seleccionado que no son hipervinculos, y se lo asignamos directamente a los controles de la vista:
-        #self.titulo_input.value = dictLibroSelec['titulo']
-
-
-        
         
     async def botonPatchLibro(self, e):
         self.resultado_texto.value = "Enviando datos..."

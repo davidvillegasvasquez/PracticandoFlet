@@ -78,7 +78,6 @@ class CrearLibro(ft.Column):
             width=220,
             label="Lenguaje",
             options=[],
-            #on_select="",
             )
     
     def build(self):
@@ -160,9 +159,8 @@ class CrearLibro(ft.Column):
                 ft.Checkbox(
                     label=genero["nombre"],
                     value=False,
-                    #Adjuntamos el dato de usuario en el atributo data:
+                    #Adjuntamos el id, en el atributo para uso del usuario, data:
                     data=genero["id"],
-                    #on_change=""
                 ) 
                 for genero in listDeDictsGeneros
             ]          
