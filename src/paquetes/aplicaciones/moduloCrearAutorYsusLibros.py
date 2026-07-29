@@ -236,6 +236,7 @@ class CrearLibro(ft.Column):
             "titulo": self.titulo_input.value,
             #Debemos usar el patron modelo_id para referenciar los campos con relaciones foreingkey del lado uno, porque vamos a construir urls con serializadores hipervinculados:
             "autor_id": val_select_autor,
+            #Ojo: no se valido descrión ni isbn. Validarlos.
             "descripcion": self.descripcion_input.value,
             "isbn": self.isbn_input.value,
             #Aunque genero tiene muchos libros, es una relación ManyToMany con Libro, por ello no se referencia con genero_id:
