@@ -62,6 +62,8 @@ class CrearLibro(ft.Column):
         super().__init__()
         self.pag = pagina
         self.sesion = sesion
+        #Creamos el atributo propiedad generos, porque lo usaremos tanto en el método cargarAutoresGenerosYlenguajes, como en el botonCrearLibro:
+        self.generos = []
         #En un modelo asíncrono, si quieres ver los controles que deben ser precargados con datos de los endpoints al navegar a la vista, en nuestro caso
 #menuAutores, menuGenero y menuLenguajes, debes inicializarlos primero aquí en el constructor y no en el método build. Esto para poder habilitar la acción de previsualización en main con el atributo de vista, on_will_mount:
         self.menuAutores = ft.Dropdown(
@@ -127,7 +129,7 @@ class CrearLibro(ft.Column):
             diccionarioLenguajes = respuestaLenguajes.json()
             #Tomamos el primer elemento de results que es una lista de diccionarios con los campos del modelo:
             listDeDictsAutores = diccionarioAutores['results']
-            listDeDictsGeneros = diccionarioGeneros['results']
+            self.generos = diccionarioGeneros['results']
             listDeDictsLenguajes = diccionarioLenguajes['results']
 
         except Exception as error:
@@ -162,7 +164,7 @@ class CrearLibro(ft.Column):
                     #Adjuntamos el id, en el atributo para uso del usuario, data:
                     data=genero["id"],
                 ) 
-                for genero in listDeDictsGeneros
+                for genero in self.generos
             ]          
 
             dropdown_options_lenguajes = [
@@ -188,7 +190,7 @@ class CrearLibro(ft.Column):
         #Recuerde que self.menuAutores.value es un str que en este caso representa el id, dicho id viene de key=autor["id"] en este un entero, por lo cual tenemos que convertirlo a entero para poder compararlos en su busqueda posterior. Lo mismo aplica a lenguaje:
 
         if self.menuAutores.value is not None:
-            val_select_autor = int(self.menuAutores.value)
+            url_autor_selec = f"{API_URL_autores}{self.menuAutores.value}/"
         else:
             self.pag.show_dialog(ft.AlertDialog(
                 title=ft.Text("Error de ingreso"),
@@ -199,11 +201,16 @@ class CrearLibro(ft.Column):
             return #Forzamos la finalización del método.
 
         #Por comprensión de listas creamos la lista de ids de los generos seleccionados que fue guardado en su atributo data:
-        gen_selec=[
+        gens_selecs_ids=[
             checkbox.data for checkbox in self.menuGeneros.controls if checkbox.value
         ]
-        if gen_selec: #Lista no vacía, el usuario seleccionó al menos un genero.
-            pass
+
+        if gens_selecs_ids: #Lista no vacía, el usuario seleccionó al menos un genero.
+            #Ahora, tenemos que crear la lista de urls de generos seleccionados, porque en serialización hipervinculada trabajamos exclusivamente con url para los campos hipervinculados.
+#Recuerde que generos es la lista de urls de los generos registrados en la base de datos:
+            urls_gens_selecs = [
+                dictGen['url'] for dictGen in self.generos if dictGen['id'] in gens_selecs_ids
+            ]
         else:
             self.pag.show_dialog(ft.AlertDialog(
                 title=ft.Text("Error de ingreso"),
@@ -214,7 +221,7 @@ class CrearLibro(ft.Column):
             return
       
         if self.menuLenguajes.value is not None:
-            val_select_len = int(self.menuLenguajes.value)
+            url_lenguaje_selec = f"{API_URL_lenguajes}{self.menuLenguajes.value}/"
         else:
             self.pag.show_dialog(ft.AlertDialog(
                 title=ft.Text("Error de ingreso"),
@@ -224,24 +231,16 @@ class CrearLibro(ft.Column):
             ))
             return
 
-        """
-        Aquí no necesitamos obtener el valor literal de los campos porque estamos usando un serializador hipervinculado, lo cual requiere el número del índice del item para construir a partir de este la url necesaria, y no un str. En vistas basadas en serializadores normales si necesitaríamos ese valor literal directamente.
-        # Iteramos sobre las opciones para extraer el texto
-        autor_selec = next((opt.text for opt in self.menuAutores.options if opt.key == val_select_autor), None)
-        
-        genero_selec = next((opt.text for...
-        """
         #Procedemos a contruir la payload o cuerpo (body) de la petición o solicitud:
         datos = {
             "titulo": self.titulo_input.value,
-            #Debemos usar el patron modelo_id para referenciar los campos con relaciones foreingkey del lado uno, porque vamos a construir urls con serializadores hipervinculados:
-            "autor_id": val_select_autor,
+            "autor": url_autor_selec,
             #Ojo: no se valido descrión ni isbn. Validarlos.
             "descripcion": self.descripcion_input.value,
             "isbn": self.isbn_input.value,
-            #Aunque genero tiene muchos libros, es una relación ManyToMany con Libro, por ello no se referencia con genero_id:
-            "genero": gen_selec,
-            "lenguaje_id": val_select_len
+            #Genero es una lista de strings, una lista de urls:
+            "genero": urls_gens_selecs,
+            "lenguaje": url_lenguaje_selec
         }
 
         try:
