@@ -257,3 +257,78 @@ class PatchLibro(ft.Column):
         except Exception as ex:
             self.resultado_texto.value = f"Error de conexión: {str(ex)}"
             self.resultado_texto.color = "red"
+
+
+class EliminarLibro(PatchLibro):
+    
+    def build(self):
+        # 1. Run original build
+        super().build()  
+
+        # 3. Invisibilizamos todos los controles excepto self.menuLibros:
+        for control in self.controls:
+            if control not in (self.menuLibros, self.resultado_texto):
+                control.visible = False    
+
+        
+        #Reescribimos el atributo on_select de menuLibros con el nuevo método:
+        self.menuLibros.on_select=self.borrarLibro
+    
+
+    async def borrarLibro(self, e):
+        self.idLibroSeleccionado = int(e.control.value)
+        
+        # Extraemos el diccionario que expresa el registro del libro seleccionado entre todos los registros-diccionarios contenidos en self.listDeDictsLibros:
+#Será uno así: {'url': 'http://127.0.0.1:8000/catalogo/apirest/libros/4/', 'id': 4, 'titulo': 'Canaima', 'autor': 'http://127.0.0.1:8000/catalogo/apirest/autores/2/', 'descripcion': 'Canaima es una novela ...', 'isbn': '9798886451740', 'genero': ['http://127.0.0.1:8000/catalogo/apirest/generos/1/'], 'lenguaje': 'http://127.0.0.1:8000/catalogo/apirest/lenguajes/1/'}
+
+        self.dictLibroSelec = next((libro for libro in self.listDeDictsLibros if libro['id'] == self.idLibroSeleccionado), None)
+
+        #Procedemos a borrar:
+        self.pag.show_dialog(ft.AlertDialog(
+                title=ft.Text("Eliminar libro"),
+                content=ft.Text(f'Desea eliminar el libro: {self.dictLibroSelec["titulo"]} ?'),
+                actions=[ft.TextButton("Eliminar", on_click=self.eliminar), ft.TextButton("Otra opción", on_click=lambda e:salir())],
+                modal=True
+            ))
+        #self.resultado_texto.value = "Enviando datos..."
+        self.pag.update()
+
+        def salir():
+            self.pag.pop_dialog()
+            return
+
+    #Método eliminar:
+    async def eliminar(self, e):
+            #Borramos el cuadro de dialogo emergente:
+            self.pag.pop_dialog()
+            self.resultado_texto.value = "Enviando datos..."
+            self.pag.update()
+            #Procedemos a borrar el libro:
+            
+            try:
+                async with httpx.AsyncClient(headers={"Authorization": f"Bearer {self.sesion.tokenAcceso}"}) as client:
+                    respuestaBorrarLibro = await client.delete(f"{API_URL_libros}{self.idLibroSeleccionado}/") 
+
+                    if respuestaBorrarLibro.status_code == 204:
+                        #Aqui se debe meter un modal y redirigir a home:
+                        self.resultado_texto.value = "Libro eliminado exitosamente."
+                        self.resultado_texto.color = "green"
+                        #Averiguar como actualizar menuLibros porque esto no lo hace:
+                        self.menuLibros.update()
+                        self.pag.update()
+                        return 
+                    else:
+                        self.resultado_texto.value = f"Error {respuestaBorrarLibro.status_code}: {respuestaBorrarLibro.text}"
+                        self.resultado_texto.color = "red"
+
+            except Exception as error:
+                
+                self.pag.show_dialog(ft.AlertDialog(
+                    title=ft.Text("Ocurrió un error..."),
+                    content=ft.Text(f'Error: {error}'),
+                    actions=[ft.TextButton("Cerrar", on_click=lambda e: self.pag.pop_dialog())],
+                    modal=True
+                ))
+
+            else: 
+                pass        

@@ -6,7 +6,7 @@ from paquetes.aplicaciones.calculadora import AppCalculadora
 from paquetes.logicas.apis import SesionJWT
 from paquetes.aplicaciones.moduloLeerAutorYsusLibros import ConsultarAutorYsusLibros
 from paquetes.aplicaciones.moduloCrearAutorYsusLibros import CrearAutor, CrearLibro
-from paquetes.aplicaciones.moduloRetrieveUpdateDestroyLibro import PatchLibro
+from paquetes.aplicaciones.moduloRetrieveUpdateDestroyLibro import PatchLibro, EliminarLibro
 
 sesion = None
 
@@ -36,6 +36,9 @@ async def main(pagina: ft.Page):
             await pagina.push_route("/patch_crud_libro")
 
         elif e.control.selected_index == 6:
+            await pagina.push_route("/delete_crud_libro")
+
+        elif e.control.selected_index == 7:
             await pagina.push_route("/calculadora")
 
     def crear_cajonNav(indice_seleccionado=0):
@@ -82,6 +85,13 @@ async def main(pagina: ft.Page):
                 ft.Divider(thickness=2),
                 ft.NavigationDrawerDestination(
                     label="Operación patch/crud, modificar(update) libro",
+                    icon=ft.Icon(ft.Icons.STORE_OUTLINED),
+                    selected_icon=ft.Icon(ft.Icons.STORE),
+                    disabled=True if (sesion is None or sesion.tokenAcceso is None) else False
+                ),
+                ft.Divider(thickness=2),
+                ft.NavigationDrawerDestination(
+                    label="Operación delete/crud, eliminar libro",
                     icon=ft.Icon(ft.Icons.STORE_OUTLINED),
                     selected_icon=ft.Icon(ft.Icons.STORE),
                     disabled=True if (sesion is None or sesion.tokenAcceso is None) else False
@@ -370,7 +380,55 @@ async def main(pagina: ft.Page):
             # Asignamos el evento de ciclo de vida de la vista
             vista.on_will_mount = await libro_actualizado.laVista_se_montara()
             pagina.views.append(vista)
-            pagina.update()      
+            pagina.update()
+
+        if pagina.route == "/delete_crud_libro":
+            #Creamos la instancia con identificador y no como una instancia literal porque la utilizaremos posteriormente en vista.on_will_mount para poder ver la lista de libros precarga en su dropdown al nevegar a esta vista:
+            libro_a_borrar=EliminarLibro(pagina, sesion)
+            vista=ft.View(
+                    route="/delete_crud_libro",
+                    controls=[
+                        ft.SafeArea(
+                            content=ft.Column(
+                                controls=[
+                                    ft.AppBar(
+                                        title=ft.Text("Operación delete/crud, Eliminar libro", expand=True),
+                                        bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
+                                        leading=ft.IconButton(
+                                            ft.Icons.MENU, on_click=mostrar_cajonNav
+                                        ),
+                                        automatically_imply_leading=False,
+                                        actions=[
+                                            ft.Text(
+                                                f'usuario:{sesion.usuario}',
+                                                visible=True if sesion.tokenAcceso is not None else False
+                                            )
+                                        ]
+                                    ),
+                                    libro_a_borrar,
+                                    ft.Button(
+                                        "Ir a calculadora",
+                                        on_click=lambda _: asyncio.create_task(
+                                            pagina.push_route("/calculadora")
+                                            )
+                                    ),                              
+                                    ft.Button(
+                                        "Botón comodín",
+                                        on_click=await libro_a_borrar.cargarLibros(),
+                                        visible=False
+                                    ),                                                                     
+                                ]
+                            )
+                        )
+                    ],
+                    scroll=ft.ScrollMode.AUTO,
+                    drawer=crear_cajonNav(indice_seleccionado=6),
+                )
+
+            # Asignamos el evento de ciclo de vida de la vista
+            vista.on_will_mount = await libro_a_borrar.laVista_se_montara()
+            pagina.views.append(vista)
+            pagina.update()
      
         if pagina.route == "/calculadora":
             pagina.views.append(
@@ -405,7 +463,7 @@ async def main(pagina: ft.Page):
                             )
                         )
                     ],
-                    drawer=crear_cajonNav(indice_seleccionado=6),
+                    drawer=crear_cajonNav(indice_seleccionado=7),
                 )
             )
         pagina.update()
