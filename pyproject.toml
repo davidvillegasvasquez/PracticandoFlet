@@ -1,30 +1,7 @@
 [project]
 name = "envflet82uv"
 version = "0.1.0"
-description = ""
-readme = "README.md"
-requires-python = ">=3.12"
-authors = [
-    { name = "Flet developer", email = "you@example.com" }
-]
 dependencies = [
-    "flet[all]>=0.85.3",
-    "flet-desktop-light",
-    "pillow>=12.1.1",
+    "flet[all]>=0.86.5",
 ]
 
-[dependency-groups]
-dev = [
-    "flet-cli>=0.85.3",
-    "flet-desktop-light>=0.85.3",
-    "flet-web>=0.85.3",
-]
-
-[tool.flet]
-org = "com.mycompany"
-product = "envflet82uv"
-company = "Flet"
-copyright = "Copyright (C) 2023-2026 by Flet"
-
-[tool.flet.app]
-path = "src"
